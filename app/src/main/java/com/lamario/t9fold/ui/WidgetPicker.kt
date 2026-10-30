@@ -113,5 +113,8 @@ private fun loadProviders(context: Context, widgets: WidgetHostController): List
             val icon = info.loadIcon(context, density)?.toBitmap(96, 96)?.asImageBitmap()
             ProviderRow(info, info.loadLabel(pm) ?: appLabel, appLabel, icon)
         }.getOrNull()
-    }.sortedWith(compareBy(String.CASE_INSENSITIVE_ORDER, { it.appLabel }).thenBy(String.CASE_INSENSITIVE_ORDER) { it.label })
+    }.sortedWith(
+        compareBy<ProviderRow, String>(String.CASE_INSENSITIVE_ORDER) { it.appLabel }
+            .thenBy(String.CASE_INSENSITIVE_ORDER) { it.label },
+    )
 }

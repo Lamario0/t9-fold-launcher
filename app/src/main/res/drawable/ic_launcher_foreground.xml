@@ -1,0 +1,12 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- A tiny candybar phone: LCD on top, 3x3 keypad below. -->
+<vector xmlns:android="http://schemas.android.com/apk/res/android"
+    android:width="108dp"
+    android:height="108dp"
+    android:viewportWidth="108"
+    android:viewportHeight="108">
+    <path android:fillColor="#FF3A4D66" android:pathData="M40,24h28a6,6 0 0 1 6,6v48a6,6 0 0 1 -6,6h-28a6,6 0 0 1 -6,-6v-48a6,6 0 0 1 6,-6z" />
+    <path android:fillColor="#FFC7F0D8" android:pathData="M40,30h28v18h-28z" />
+    <path android:fillColor="#FF43523D" android:pathData="M43,40h3v3h-3zM46,40h3v3h-3zM49,40h3v3h-3zM52,37h3v3h-3zM55,34h3v3h-3z" />
+    <path android:fillColor="#FFE6EBEF" android:pathData="M40,53h7v4h-7zM50.5,53h7v4h-7zM61,53h7v4h-7zM40,61h7v4h-7zM50.5,61h7v4h-7zM61,61h7v4h-7zM40,69h7v4h-7zM50.5,69h7v4h-7zM61,69h7v4h-7z" />
+</vector>

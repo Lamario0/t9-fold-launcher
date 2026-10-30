@@ -1,0 +1,50 @@
+# T9 Fold Launcher
+
+A personal home-screen launcher for the Galaxy Z Fold 5 that looks and works like an old candybar phone.
+
+- **Cover screen:** a phone with an LCD and a T9 keypad. Swipe left for two widget pages.
+- **Unfolded:** like an opened flip phone. The left half is the cover phone flipped face down (mirrored). The right half shows the same two widget pages as the cover screen.
+
+## Keys
+
+| Key | What it does |
+| --- | --- |
+| **2–9** | Find apps. In *Multi-tap* mode, tapping 5 shows J apps, again K, again L, a fourth time J+K+L. Pause, or press another key, to add the next letter. In *T9 words* mode, each press is one letter and any word in the name can match (6-2-7 finds Google **Map**s). |
+| **0** | All apps, A–Z. |
+| **1, \*, #** | Favourite apps. Tap to open; hold to change. The first tap of an empty key asks you to pick one. |
+| **Green** | Open the highlighted app. From the idle screen it shows recent apps. |
+| **Red** | Back to the idle screen. |
+| **Left soft key** | *Menu* (settings) on the idle screen. *Options* on an app: info, uninstall, hide, assign to a favourite key. |
+| **Right soft key (C)** | Delete a letter / go back. Hold to clear everything. |
+| **Up / Down** | Move the highlight. |
+
+Long-press any app in a list for its options. Swipe down anywhere to open notifications.
+
+## Settings (Menu)
+
+Search mode, key sounds (tones / clicks / silent), vibration, Android or retro status bar, the unfold animation, mirroring of the inside keypad, colour or LCD-style icons, favourite keys, hidden apps, and a shortcut to set the launcher as your home app.
+
+## Widgets
+
+Widget pages start blank. Tap **EDIT** on a widget page, then **+ ADD WIDGET**. You can add any Android widget or a built-in retro one (pixel clock, calendar, battery). In edit mode, each widget can be moved up or down, made taller or shorter, or removed. The cover screen and the unfolded screen share the same pages.
+
+## Installing on the phone
+
+Every push to `main` builds an APK with GitHub Actions and attaches it to a new release.
+
+1. On the phone, sign in to github.com in the browser. The repo is private, so this is needed.
+2. Open the repo's **Releases** page, take the newest **Build N**, and download `t9-fold-launcher.apk`.
+3. Open the APK and allow your browser to install unknown apps if asked.
+4. Press Home and choose **T9 Fold**, then **Always**. You can also use *Menu → Set as home app*, or *Settings → Apps → Choose default apps → Home app*.
+
+Later builds install over the old one and keep your settings. The debug signing key is committed on purpose so this keeps working.
+
+## Building on a PC (optional)
+
+```bash
+git clone https://github.com/lamario0/t9-fold-launcher.git C:\dev\t9-fold-launcher
+```
+
+Open the folder in Android Studio, or run `gradlew assembleDebug`.
+
+The pixel font is VT323 (SIL Open Font License; see `FONT_LICENSE_OFL.txt`).

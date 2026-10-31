@@ -82,3 +82,35 @@ class T9Test {
         assertFalse(input.composing)
     }
 }
+
+class MultiTapTextTest {
+    private fun type(vararg groups: String): MultiTapText {
+        // Each group is one letter: the same key tapped N times; groups are 2 s apart.
+        var entry = MultiTapText()
+        var now = 0L
+        for (g in groups) {
+            now += 2_000
+            for ((i, k) in g.withIndex()) entry = entry.press(k, now + i * 100L)
+            now += g.length * 100L
+        }
+        return entry
+    }
+
+    @Test
+    fun cyclesLettersAndCapitalisesWords() {
+        // H-i-space-G: 44, 444, 0, 4
+        assertEquals("Hi G", type("44", "444", "0", "4").text)
+    }
+
+    @Test
+    fun cyclesOnToTheDigitAndWrapsAround() {
+        assertEquals("2", type("2222").text)
+        assertEquals("A", type("22222").text)
+    }
+
+    @Test
+    fun backspaceAndIgnoredKeys() {
+        assertEquals("H", type("44", "444").backspace().text)
+        assertEquals("H", type("44", "*", "#").text)
+    }
+}

@@ -119,3 +119,38 @@ class SearchIndex<T>(items: List<T>, label: (T) -> String) {
         }.sortedWith(compareBy({ it.first }, { it.second.sortKey })).map { it.second.item }
     }
 }
+
+/**
+ * Old-phone text entry, used to name folders: tap a key repeatedly to cycle its letters, then
+ * pause or press another key to move on. The first letter of each word is capitalised.
+ */
+data class MultiTapText(
+    val text: String = "",
+    val lastKey: Char? = null,
+    val lastPressAt: Long = 0L,
+    val composing: Boolean = false,
+) {
+    fun press(key: Char, now: Long, timeoutMs: Long = SearchInput.MULTI_TAP_TIMEOUT_MS): MultiTapText {
+        val chars = KEY_CHARS[key] ?: return this
+        val cycles = composing && key == lastKey && now - lastPressAt <= timeoutMs && text.isNotEmpty()
+        if (cycles) {
+            val before = text.dropLast(1)
+            val next = chars[(chars.indexOf(text.last().lowercaseChar()) + 1) % chars.length]
+            return copy(text = before + cased(before, next), lastPressAt = now)
+        }
+        if (text.length >= MAX_LENGTH) return this
+        return copy(text = text + cased(text, chars[0]), lastKey = key, lastPressAt = now, composing = true)
+    }
+
+    fun commit(): MultiTapText = copy(composing = false)
+
+    fun backspace(): MultiTapText = copy(text = text.dropLast(1), composing = false)
+
+    private fun cased(before: String, c: Char) = if (before.isEmpty() || before.last() == ' ') c.uppercaseChar() else c
+
+    companion object {
+        const val MAX_LENGTH = 20
+        private val KEY_CHARS: Map<Char, String> =
+            T9.KEY_LETTERS.mapValues { (digit, letters) -> letters + digit } + mapOf('1' to ".-'&1", '0' to " 0")
+    }
+}

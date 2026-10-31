@@ -60,6 +60,13 @@ fun LcdContent(state: LauncherState, mirrored: Boolean) {
             state.commitInput(input.lastPressAt)
         }
     }
+    val nameEntry = state.nameEntry
+    LaunchedEffect(nameEntry.lastPressAt, nameEntry.composing) {
+        if (nameEntry.composing) {
+            delay(SearchInput.MULTI_TAP_TIMEOUT_MS)
+            state.commitInput(nameEntry.lastPressAt)
+        }
+    }
 
     Column(Modifier.fillMaxSize()) {
         if (state.prefs.retroStatusBar) {
@@ -68,10 +75,10 @@ fun LcdContent(state: LauncherState, mirrored: Boolean) {
         }
         if (screen != Screen.Idle) LcdHeader(state)
         Box(Modifier.fillMaxWidth().weight(1f)) {
-            if (screen == Screen.Idle) {
-                IdleScreen(state, Modifier.fillMaxSize().swipeDownToExpand(state::expandNotifications))
-            } else {
-                LcdList(state)
+            when (screen) {
+                Screen.Idle -> IdleScreen(state, Modifier.fillMaxSize().swipeDownToExpand(state::expandNotifications))
+                is Screen.NameFolder -> NameEntryScreen(state)
+                else -> LcdList(state)
             }
         }
         SoftLabels(state, mirrored)
@@ -83,7 +90,7 @@ private fun LcdHeader(state: LauncherState) {
     Row(Modifier.fillMaxWidth().padding(bottom = 2.dp), verticalAlignment = Alignment.CenterVertically) {
         if (state.screen == Screen.Search) {
             PixelText(queryText(state), Modifier.weight(1f), size = 26.dp)
-            PixelText("${state.results.size}", size = 20.dp)
+            PixelText("${state.resultCount}", size = 20.dp)
         } else {
             PixelText(state.title(), Modifier.weight(1f), size = 24.dp)
         }
@@ -205,12 +212,56 @@ private fun LcdRow(state: LauncherState, item: LcdItem, number: Int?, selected: 
             }
             Spacer(Modifier.width(8.dp))
         }
+        if (item.folderId != null) {
+            FolderIcon(ink, Modifier.size(28.dp))
+            Spacer(Modifier.width(8.dp))
+        }
         item.checked?.let { checked ->
             RadioBox(checked, ink)
             Spacer(Modifier.width(8.dp))
         }
         PixelText(item.title, Modifier.weight(1f), color = ink)
         item.value?.let { PixelText(it, Modifier.padding(start = 6.dp), size = 20.dp, color = ink) }
+    }
+}
+
+/** A chunky pixel folder: a tab on top of a box. */
+@Composable
+private fun FolderIcon(ink: Color, modifier: Modifier) {
+    Canvas(modifier) {
+        val u = size.minDimension / 8f
+        val top = u * 1.5f
+        drawRect(ink, Offset(u * 0.5f, top), Size(u * 3f, u))
+        drawRect(ink, Offset(u * 0.5f, top + u), Size(u * 7f, u * 4.5f), style = androidx.compose.ui.graphics.drawscope.Stroke(u))
+        drawRect(ink, Offset(u * 0.5f, top + u), Size(u * 7f, u))
+    }
+}
+
+/** Typing a folder name on the keypad, letter by letter. */
+@Composable
+private fun NameEntryScreen(state: LauncherState) {
+    val entry = state.nameEntry
+    var cursorOn by remember { mutableStateOf(true) }
+    LaunchedEffect(Unit) {
+        while (true) {
+            delay(500)
+            cursorOn = !cursorOn
+        }
+    }
+    val text = buildAnnotatedString {
+        if (entry.composing && entry.text.isNotEmpty()) {
+            append(entry.text.dropLast(1))
+            withStyle(SpanStyle(background = Retro.Ink, color = Retro.Lcd)) { append(entry.text.last()) }
+        } else {
+            append(entry.text)
+            append(if (cursorOn) "_" else " ")
+        }
+    }
+    Column(Modifier.fillMaxSize().padding(top = 8.dp)) {
+        PixelText(text, Modifier.fillMaxWidth(), size = 32.dp, maxLines = 2)
+        Spacer(Modifier.weight(1f))
+        PixelText("Tap a key again for the next letter", Modifier.fillMaxWidth(), size = 16.dp, maxLines = 2)
+        PixelText("0 = space   C = delete", Modifier.fillMaxWidth(), size = 16.dp)
     }
 }
 

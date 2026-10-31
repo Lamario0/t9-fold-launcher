@@ -11,7 +11,7 @@ A personal home-screen launcher for the Galaxy Z Fold 5 that looks and works lik
 | --- | --- |
 | **2–9** | Find apps. In *Multi-tap* mode, tapping 5 shows J apps, again K, again L, a fourth time J+K+L. Pause, or press another key, to add the next letter. In *T9 words* mode, each press is one letter and any word in the name can match (6-2-7 finds Google **Map**s). |
 | **0** | All apps, A–Z. |
-| **1, \*, #** | Favourite apps. Tap to open; hold to change. The first tap of an empty key asks you to pick one. |
+| **1, \*, #** | Favourite apps or folders. Tap to open; hold to change. The first tap of an empty key asks you to pick one. |
 | **Green** | Open the highlighted app. From the idle screen it shows recent apps. |
 | **Red** | Back to the idle screen. |
 | **Left soft key** | *Menu* (settings) on the idle screen. *Options* on an app: info, uninstall, hide, assign to a favourite key. |
@@ -19,6 +19,15 @@ A personal home-screen launcher for the Galaxy Z Fold 5 that looks and works lik
 | **Up / Down** | Move the highlight. |
 
 Long-press any app in a list for its options. Swipe down anywhere to open notifications.
+
+## Folders
+
+Folders are lists on the LCD, like the folders on the old phones.
+
+- **Make one:** open an app's *Options*, choose *Add to folder*, then *+ New folder*. You can also use *Menu → Folders → + New folder*. Type the name on the keypad, old-phone style: tap 4 twice for H, pause, then tap 4 three times for i. 0 is a space, C deletes, and *Save* (the left soft key or green key) finishes.
+- **Find one:** folders are listed first on **0** (All apps). They also show up when you search, so typing G-A-M finds a "Games" folder.
+- **Inside a folder:** the green key opens the highlighted app. *+ Add apps* at the bottom lets you tick apps in or out. *Options* on an app there includes *Remove from folder*.
+- **Folder options** (*Options* or long-press on a folder): open, add or remove apps, rename, delete (the apps stay installed), or put the folder on key 1, \* or #.
 
 ## Phone styles
 

@@ -289,7 +289,7 @@ private fun DigitKey(state: LauncherState, c: Char, modifier: Modifier) {
     val sub = when {
         c in T9.KEY_LETTERS -> T9.KEY_LETTERS.getValue(c).uppercase()
         c == '0' -> "APPS"
-        else -> state.favoriteApp(c)?.label?.take(5)?.uppercase() ?: "FAV"
+        else -> state.favoriteLabel(c)?.take(5)?.uppercase() ?: "FAV"
     }
     RetroKey(
         state = state,

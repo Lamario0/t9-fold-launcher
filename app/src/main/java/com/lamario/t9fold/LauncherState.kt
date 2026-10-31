@@ -7,8 +7,10 @@ import androidx.compose.runtime.mutableIntStateOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.setValue
 import com.lamario.t9fold.data.AppEntry
+import com.lamario.t9fold.data.AppFolder
 import com.lamario.t9fold.data.AppRepository
 import com.lamario.t9fold.data.Prefs
+import com.lamario.t9fold.search.MultiTapText
 import com.lamario.t9fold.search.SearchIndex
 import com.lamario.t9fold.search.SearchInput
 import com.lamario.t9fold.search.SearchMode
@@ -60,12 +62,21 @@ sealed interface Screen {
     data class Choice(val setting: Setting) : Screen { override val numbered = true }
     data object Favorites : Screen { override val numbered = true }
     data class AppActions(val appKey: String) : Screen { override val numbered = true }
+    data object Folders : Screen
+    data class Folder(val id: Long) : Screen
+    data class FolderApps(val id: Long) : Screen
+    data class AddToFolder(val appKey: String) : Screen
+    data class FolderActions(val id: Long) : Screen { override val numbered = true }
+
+    /** Typing a folder name on the keypad. [folderId] null means a new folder, optionally holding [appKey]. */
+    data class NameFolder(val folderId: Long?, val appKey: String?) : Screen
 }
 
 class LcdItem(
     val id: String,
     val title: String,
     val app: AppEntry? = null,
+    val folderId: Long? = null,
     val value: String? = null,
     /** Non-null for radio-style option rows. */
     val checked: Boolean? = null,
@@ -91,6 +102,8 @@ class LauncherState(
     /** Bumped when the Home button is pressed while we're already home. */
     var homeSignal by mutableIntStateOf(0)
         private set
+    var nameEntry by mutableStateOf(MultiTapText())
+        private set
     var editingWidgetPage by mutableStateOf<Int?>(null)
     var widgetPickerPage by mutableStateOf<Int?>(null)
 
@@ -101,16 +114,45 @@ class LauncherState(
     val results by derivedStateOf {
         if (input.isEmpty) emptyList() else index.search(input, prefs.searchMode)
     }
+    private val sortedFolders by derivedStateOf {
+        prefs.folders.sortedWith(compareBy(String.CASE_INSENSITIVE_ORDER) { it.name })
+    }
+    private val folderIndex by derivedStateOf { SearchIndex(sortedFolders) { it.name } }
+    private val folderResults by derivedStateOf {
+        if (input.isEmpty) emptyList() else folderIndex.search(input, prefs.searchMode)
+    }
+    val resultCount: Int get() = results.size + folderResults.size
 
     fun icon(app: AppEntry) = repo.icons[app.key]
 
-    fun favoriteApp(key: Char): AppEntry? = prefs.favorites[key]?.let { repo.byKey[it] }
+    /** What a favourite key is set to, for printing on the key: an app or folder name. */
+    fun favoriteLabel(key: Char): String? {
+        val favorite = prefs.favorites[key] ?: return null
+        return Prefs.folderIdOf(favorite)?.let { prefs.folder(it)?.name } ?: repo.byKey[favorite]?.label
+    }
+
+    private fun openFavorite(key: Char) {
+        val favorite = prefs.favorites[key]
+        val folderId = favorite?.let { Prefs.folderIdOf(it) }
+        val app = favorite?.let { repo.byKey[it] }
+        when {
+            folderId != null && prefs.folder(folderId) != null -> open(Screen.Folder(folderId))
+            app != null -> launch(app)
+            else -> open(Screen.PickFavorite(key))
+        }
+    }
+
+    private fun folderApps(folder: AppFolder): List<AppEntry> = folder.apps
+        .mapNotNull { repo.byKey[it] }
+        .filter { it.key !in prefs.hiddenApps }
+        .sortedWith(compareBy(String.CASE_INSENSITIVE_ORDER) { it.label })
 
     // ---- Keys -------------------------------------------------------------------------------
 
     fun feedback(key: PhoneKey) = actions.keyFeedback(key)
 
     fun onKey(key: PhoneKey) {
+        (screen as? Screen.NameFolder)?.let { return onNameKey(it, key) }
         when (key) {
             PhoneKey.UP -> moveSelection(-1)
             PhoneKey.DOWN -> moveSelection(1)
@@ -118,8 +160,14 @@ class LauncherState(
             PhoneKey.CALL -> if (screen == Screen.Idle) open(Screen.Recents) else activateSelected()
             PhoneKey.SOFT_LEFT -> when (screen) {
                 Screen.Idle -> open(Screen.Menu)
-                Screen.Search, Screen.AllApps, Screen.Recents ->
-                    selectedItem()?.app?.let { push(Screen.AppActions(it.key)) }
+                Screen.Search, Screen.AllApps, Screen.Recents, Screen.Folders, is Screen.Folder -> {
+                    val item = selectedItem()
+                    when {
+                        item?.app != null -> push(Screen.AppActions(item.app.key))
+                        item?.folderId != null -> push(Screen.FolderActions(item.folderId))
+                        else -> item?.onSelect?.invoke()
+                    }
+                }
                 else -> activateSelected()
             }
             PhoneKey.SOFT_RIGHT -> if (screen == Screen.Search) {
@@ -134,6 +182,10 @@ class LauncherState(
     }
 
     fun onLongKey(key: PhoneKey) {
+        if (screen is Screen.NameFolder) {
+            if (key == PhoneKey.SOFT_RIGHT) nameEntry = MultiTapText() else onKey(key)
+            return
+        }
         when (key) {
             PhoneKey.SOFT_RIGHT -> resetToIdle()
             PhoneKey.K1, PhoneKey.STAR, PhoneKey.HASH -> open(Screen.PickFavorite(key.char!!))
@@ -160,13 +212,43 @@ class LauncherState(
                 selection = 0
             }
             '0' -> open(Screen.AllApps)
-            else -> favoriteApp(c)?.let(::launch) ?: open(Screen.PickFavorite(c))
+            else -> openFavorite(c)
         }
     }
 
     /** Called once the multi-tap pause has passed, so the next tap of the same key starts a new letter. */
     fun commitInput(pressedAt: Long) {
         if (input.composing && input.lastPressAt == pressedAt) input = input.commit()
+        if (nameEntry.composing && nameEntry.lastPressAt == pressedAt) nameEntry = nameEntry.commit()
+    }
+
+    private fun onNameKey(screen: Screen.NameFolder, key: PhoneKey) {
+        when (key) {
+            PhoneKey.SOFT_LEFT, PhoneKey.CALL -> {
+                val name = nameEntry.text.trim().ifEmpty { "Folder ${prefs.folders.size + 1}" }
+                if (screen.folderId == null) {
+                    prefs.createFolder(name, screen.appKey)
+                } else {
+                    prefs.renameFolder(screen.folderId, name)
+                }
+                back()
+            }
+            PhoneKey.SOFT_RIGHT -> if (nameEntry.text.isEmpty()) back() else nameEntry = nameEntry.backspace()
+            PhoneKey.END -> resetToIdle()
+            PhoneKey.UP, PhoneKey.DOWN -> Unit
+            else -> nameEntry = nameEntry.press(key.char!!, SystemClock.uptimeMillis())
+        }
+    }
+
+    private fun startNaming(folderId: Long?, appKey: String?) {
+        nameEntry = MultiTapText(text = folderId?.let { prefs.folder(it)?.name }.orEmpty())
+        push(Screen.NameFolder(folderId, appKey))
+    }
+
+    private fun deleteFolder(id: Long) {
+        prefs.deleteFolder(id)
+        stack = stack.filterNot { it == Screen.Folder(id) || it == Screen.FolderActions(id) || it == Screen.FolderApps(id) }
+        selection = 0
     }
 
     // ---- Navigation ------------------------------------------------------------------------
@@ -228,8 +310,8 @@ class LauncherState(
 
     fun items(): List<LcdItem> = when (val s = screen) {
         Screen.Idle -> emptyList()
-        Screen.Search -> results.map(::appItem)
-        Screen.AllApps -> visibleApps.map(::appItem)
+        Screen.Search -> folderResults.map(::folderItem) + results.map(::appItem)
+        Screen.AllApps -> sortedFolders.map(::folderItem) + visibleApps.map(::appItem)
         Screen.Recents -> prefs.recents.mapNotNull { repo.byKey[it] }.map(::appItem)
         Screen.HiddenApps -> repo.apps.filter { it.key in prefs.hiddenApps }.map { app ->
             LcdItem(app.key, app.label, app = app, value = "Show") { prefs.toggleHidden(app.key) }
@@ -239,7 +321,12 @@ class LauncherState(
                 prefs.setFavorite(s.key, null)
                 back()
             },
-        ) + visibleApps.map { app ->
+        ) + sortedFolders.map { folder ->
+            LcdItem("folder:${folder.id}", folder.name, folderId = folder.id) {
+                prefs.setFavorite(s.key, Prefs.folderFavorite(folder.id))
+                back()
+            }
+        } + visibleApps.map { app ->
             LcdItem(app.key, app.label, app = app) {
                 prefs.setFavorite(s.key, app.key)
                 back()
@@ -248,9 +335,29 @@ class LauncherState(
         Screen.Menu -> menuItems()
         is Screen.Choice -> choiceItems(s.setting)
         Screen.Favorites -> Prefs.FAVORITE_KEYS.map { k ->
-            LcdItem("fav$k", "Key $k", value = favoriteApp(k)?.label ?: "Empty") { push(Screen.PickFavorite(k)) }
+            LcdItem("fav$k", "Key $k", value = favoriteLabel(k) ?: "Empty") { push(Screen.PickFavorite(k)) }
         }
         is Screen.AppActions -> repo.byKey[s.appKey]?.let(::appActionItems) ?: emptyList()
+        Screen.Folders -> listOf(LcdItem("new", "+ New folder") { startNaming(null, null) }) +
+            sortedFolders.map(::folderItem)
+        is Screen.Folder -> prefs.folder(s.id)?.let { folder ->
+            folderApps(folder).map(::appItem) + LcdItem("edit", "+ Add apps") { push(Screen.FolderApps(s.id)) }
+        } ?: emptyList()
+        is Screen.FolderApps -> prefs.folder(s.id)?.let { folder ->
+            visibleApps.map { app ->
+                LcdItem(app.key, app.label, app = app, checked = app.key in folder.apps) {
+                    prefs.toggleInFolder(s.id, app.key)
+                }
+            }
+        } ?: emptyList()
+        is Screen.AddToFolder -> listOf(LcdItem("new", "+ New folder") { startNaming(null, s.appKey) }) +
+            sortedFolders.map { folder ->
+                LcdItem("folder:${folder.id}", folder.name, folderId = folder.id, checked = s.appKey in folder.apps) {
+                    prefs.toggleInFolder(folder.id, s.appKey)
+                }
+            }
+        is Screen.FolderActions -> prefs.folder(s.id)?.let(::folderActionItems) ?: emptyList()
+        is Screen.NameFolder -> emptyList()
     }
 
     private fun appItem(app: AppEntry) = LcdItem(
@@ -260,10 +367,39 @@ class LauncherState(
         onLongPress = { push(Screen.AppActions(app.key)) },
     ) { launch(app) }
 
+    private fun folderItem(folder: AppFolder) = LcdItem(
+        id = "folder:${folder.id}",
+        title = folder.name,
+        folderId = folder.id,
+        value = folderApps(folder).size.toString(),
+        onLongPress = { push(Screen.FolderActions(folder.id)) },
+    ) { push(Screen.Folder(folder.id)) }
+
+    private fun folderActionItems(folder: AppFolder): List<LcdItem> = listOf(
+        LcdItem("open", "Open") { push(Screen.Folder(folder.id)) },
+        LcdItem("apps", "Add / remove apps") { push(Screen.FolderApps(folder.id)) },
+        LcdItem("rename", "Rename") { startNaming(folder.id, null) },
+        LcdItem("delete", "Delete folder") { deleteFolder(folder.id) },
+    ) + Prefs.FAVORITE_KEYS.map { k ->
+        val assigned = prefs.favorites[k] == Prefs.folderFavorite(folder.id)
+        LcdItem("fav$k", "On key $k", checked = assigned) {
+            prefs.setFavorite(k, if (assigned) null else Prefs.folderFavorite(folder.id))
+        }
+    }
+
     private fun appActionItems(app: AppEntry): List<LcdItem> {
         val hidden = app.key in prefs.hiddenApps
-        return listOf(
+        // Opened from inside a folder: offer to take it back out.
+        val insideFolder = stack.getOrNull(stack.size - 2) as? Screen.Folder
+        return listOfNotNull(
             LcdItem("open", "Open") { launch(app) },
+            LcdItem("folder", "Add to folder") { push(Screen.AddToFolder(app.key)) },
+            insideFolder?.let { f ->
+                LcdItem("unfolder", "Remove from folder") {
+                    prefs.toggleInFolder(f.id, app.key)
+                    back()
+                }
+            },
             LcdItem("info", "App info") { actions.openAppInfo(app) },
             LcdItem("uninstall", "Uninstall") {
                 actions.uninstall(app)
@@ -294,6 +430,7 @@ class LauncherState(
             setting(Setting.MIRROR_INSIDE, onOff(prefs.mirrorInside)),
             setting(Setting.ICON_STYLE, if (prefs.retroIcons) "LCD" else "Colour"),
             LcdItem("favorites", "Favourite keys") { push(Screen.Favorites) },
+            LcdItem("folders", "Folders", value = prefs.folders.size.toString()) { push(Screen.Folders) },
             LcdItem("hidden", "Hidden apps", value = prefs.hiddenApps.size.toString()) { push(Screen.HiddenApps) },
             LcdItem("home", "Set as home app") { actions.openHomeSettings() },
         )
@@ -346,13 +483,20 @@ class LauncherState(
         is Screen.Choice -> s.setting.title
         Screen.Favorites -> "Favourite keys"
         is Screen.AppActions -> repo.byKey[s.appKey]?.label ?: "App"
+        Screen.Folders -> "Folders"
+        is Screen.Folder -> prefs.folder(s.id)?.name ?: "Folder"
+        is Screen.FolderApps -> "Apps in ${prefs.folder(s.id)?.name ?: "folder"}"
+        is Screen.AddToFolder -> "Add to folder"
+        is Screen.FolderActions -> prefs.folder(s.id)?.name ?: "Folder"
+        is Screen.NameFolder -> if (s.folderId == null) "New folder" else "Rename folder"
     }
 
     /** Labels shown above the left soft key, green key, and right soft key. */
     fun softLabels(): Triple<String, String, String> = when (screen) {
         Screen.Idle -> Triple("Menu", "", "")
         Screen.Search -> Triple("Options", "Open", "Clear")
-        Screen.AllApps, Screen.Recents -> Triple("Options", "Open", "Back")
+        Screen.AllApps, Screen.Recents, Screen.Folders, is Screen.Folder -> Triple("Options", "Open", "Back")
+        is Screen.NameFolder -> Triple("Save", "", if (nameEntry.text.isEmpty()) "Back" else "Clear")
         else -> Triple("Select", "", "Back")
     }
 

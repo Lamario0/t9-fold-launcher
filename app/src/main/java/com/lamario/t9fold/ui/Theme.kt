@@ -14,8 +14,6 @@ import androidx.compose.ui.draw.drawWithCache
 import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.graphics.ColorFilter
-import androidx.compose.ui.graphics.ColorMatrix
 import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.text.AnnotatedString
 import androidx.compose.ui.text.TextStyle
@@ -27,52 +25,6 @@ import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import com.lamario.t9fold.R
-
-object Retro {
-    // The classic green monochrome LCD.
-    val Lcd = Color(0xFFC7F0D8)
-    val LcdShade = Color(0xFFADD9BF)
-    val Ink = Color(0xFF43523D)
-    val InkFaint = Color(0x2E43523D)
-
-    // Navy plastic body.
-    val BodyLight = Color(0xFF34465C)
-    val BodyDark = Color(0xFF141C27)
-    val Bezel = Color(0xFF0D1218)
-    val BezelEdge = Color(0xFF2B343F)
-    val Chrome = Color(0xFF9AA7B4)
-    val ChromeDark = Color(0xFF5E6B78)
-
-    // Keys.
-    val KeyLight = Color(0xFFF0F3F6)
-    val KeyDark = Color(0xFFADB7C1)
-    val KeyText = Color(0xFF1B2632)
-    val KeySubText = Color(0xFF52606D)
-    val CallLight = Color(0xFF63C871)
-    val CallDark = Color(0xFF2B7A37)
-    val EndLight = Color(0xFFE76A60)
-    val EndDark = Color(0xFF992A23)
-
-    val Body: Brush = Brush.verticalGradient(listOf(BodyLight, BodyDark))
-
-    /** Maps an icon's brightness onto the two LCD colours, so app icons look printed on the screen. */
-    val LcdIconFilter: ColorFilter = run {
-        fun ch(c: Float) = c * 255f
-        val dr = Lcd.red - Ink.red
-        val dg = Lcd.green - Ink.green
-        val db = Lcd.blue - Ink.blue
-        ColorFilter.colorMatrix(
-            ColorMatrix(
-                floatArrayOf(
-                    0.30f * dr, 0.59f * dr, 0.11f * dr, 0f, ch(Ink.red),
-                    0.30f * dg, 0.59f * dg, 0.11f * dg, 0f, ch(Ink.green),
-                    0.30f * db, 0.59f * db, 0.11f * db, 0f, ch(Ink.blue),
-                    0f, 0f, 0f, 1f, 0f,
-                ),
-            ),
-        )
-    }
-}
 
 val PixelFont = FontFamily(Font(R.font.vt323_regular))
 
@@ -148,7 +100,7 @@ fun LcdPanel(
                 .fillMaxSize()
                 .clip(RoundedCornerShape(6.dp))
                 .background(Brush.verticalGradient(listOf(Retro.Lcd, Retro.LcdShade)))
-                .pixelGrid()
+                .then(if (Retro.lcdGrid) Modifier.pixelGrid() else Modifier)
                 .padding(horizontal = 8.dp, vertical = 6.dp),
             content = content,
         )

@@ -47,7 +47,10 @@ private object FoldMemory {
 @Composable
 fun LauncherRoot(state: LauncherState, store: WidgetStore, widgets: WidgetHostController) {
     val status by rememberPhoneStatus()
-    CompositionLocalProvider(LocalPhoneStatus provides status) {
+    CompositionLocalProvider(
+        LocalPhoneStatus provides status,
+        LocalSkin provides state.prefs.phoneStyle.skin,
+    ) {
         BoxWithConstraints(Modifier.fillMaxSize().background(Retro.Body)) {
             // The Fold 5 cover screen is ~340dp wide; the inner screen is well over 600dp.
             val isMain = maxWidth >= 600.dp

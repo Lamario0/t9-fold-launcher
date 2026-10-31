@@ -250,6 +250,8 @@ fun RetroStatusRow(modifier: Modifier = Modifier, ink: Color = Retro.Ink) {
         }
         PixelText(status.time, size = 20.dp, color = ink)
         Row(verticalAlignment = Alignment.CenterVertically) {
+            PixelText("${status.batteryPercent}%", size = 18.dp, color = ink)
+            Spacer(Modifier.width(4.dp))
             if (status.charging) PixelText("+", size = 18.dp, color = ink)
             Canvas(Modifier.size(28.dp, 14.dp)) {
                 val nub = size.width * 0.1f

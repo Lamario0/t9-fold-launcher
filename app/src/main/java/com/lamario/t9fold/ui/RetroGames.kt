@@ -76,6 +76,8 @@ fun RetroGames(modifier: Modifier = Modifier) {
         }
     }
 
+    val ink = Retro.Ink
+    val faint = Retro.InkFaint
     Canvas(
         modifier.pointerInput(Unit) { detectTapGestures { game++ } },
     ) {
@@ -86,9 +88,9 @@ fun RetroGames(modifier: Modifier = Modifier) {
         val ox = (size.width - cell * GW) / 2
         val oy = (size.height - cell * GH) / 2
         val dot = Size(cell * 0.86f, cell * 0.86f)
-        drawRect(Retro.InkFaint, Offset(ox, oy), Size(cell * GW, cell * GH), alpha = 0.25f)
+        drawRect(faint, Offset(ox, oy), Size(cell * GW, cell * GH), alpha = 0.25f)
         for (y in 0 until GH) for (x in 0 until GW) {
-            if (frame.px[y * GW + x]) drawRect(Retro.Ink, Offset(ox + x * cell, oy + y * cell), dot)
+            if (frame.px[y * GW + x]) drawRect(ink, Offset(ox + x * cell, oy + y * cell), dot)
         }
     }
 }

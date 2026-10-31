@@ -13,6 +13,7 @@ import com.lamario.t9fold.search.SearchIndex
 import com.lamario.t9fold.search.SearchInput
 import com.lamario.t9fold.search.SearchMode
 import com.lamario.t9fold.system.KeySound
+import com.lamario.t9fold.ui.PhoneStyle
 
 enum class PhoneKey(val char: Char? = null) {
     K1('1'), K2('2'), K3('3'), K4('4'), K5('5'), K6('6'), K7('7'), K8('8'), K9('9'),
@@ -35,6 +36,7 @@ interface LauncherActions {
 }
 
 enum class Setting(val title: String) {
+    PHONE_STYLE("Phone style"),
     SEARCH_MODE("Search mode"),
     KEY_SOUND("Key sounds"),
     VIBRATION("Vibration"),
@@ -283,6 +285,7 @@ class LauncherState(
         fun setting(s: Setting, value: String) = LcdItem(s.name, s.title, value = value) { push(Screen.Choice(s)) }
         fun onOff(b: Boolean) = if (b) "On" else "Off"
         return listOf(
+            setting(Setting.PHONE_STYLE, prefs.phoneStyle.label),
             setting(Setting.SEARCH_MODE, prefs.searchMode.label),
             setting(Setting.KEY_SOUND, prefs.keySound.label),
             setting(Setting.VIBRATION, onOff(prefs.vibration)),
@@ -305,6 +308,10 @@ class LauncherState(
                 }
             }
         return when (setting) {
+            Setting.PHONE_STYLE -> options(
+                prefs.phoneStyle,
+                *PhoneStyle.entries.map { it.label to it }.toTypedArray(),
+            ) { prefs.phoneStyle = it }
             Setting.SEARCH_MODE -> options(
                 prefs.searchMode,
                 *SearchMode.entries.map { it.label to it }.toTypedArray(),

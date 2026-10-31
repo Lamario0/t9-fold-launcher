@@ -60,20 +60,21 @@ fun PhoneBody(state: LauncherState, mirrored: Boolean, modifier: Modifier = Modi
             .padding(start = 14.dp, end = 14.dp, top = 6.dp, bottom = 22.dp),
         horizontalAlignment = Alignment.CenterHorizontally,
     ) {
+        val skin = Retro
         Earpiece()
         Spacer(Modifier.height(8.dp))
-        LcdPanel(Modifier.fillMaxWidth().weight(0.5f)) {
+        LcdPanel(Modifier.fillMaxWidth().weight(skin.lcdWeight)) {
             LcdContent(state, mirrored)
         }
-        Spacer(Modifier.height(12.dp))
+        if (skin.flip) Hinge() else Spacer(Modifier.height(12.dp))
         Column(
             Modifier
                 .fillMaxWidth()
-                .weight(0.5f)
+                .weight(1f - skin.lcdWeight)
                 .swipeDownToExpand(state::expandNotifications),
         ) {
             NavCluster(state, mirrored, Modifier.fillMaxWidth().weight(0.3f))
-            Spacer(Modifier.height(12.dp))
+            Spacer(Modifier.height(skin.keyGap.coerceAtLeast(8.dp)))
             Keypad(state, mirrored, Modifier.fillMaxWidth().weight(0.7f))
         }
     }
@@ -82,16 +83,45 @@ fun PhoneBody(state: LauncherState, mirrored: Boolean, modifier: Modifier = Modi
 @Composable
 private fun Earpiece() {
     Column(horizontalAlignment = Alignment.CenterHorizontally) {
-        Box(
-            Modifier
-                .width(56.dp)
-                .height(6.dp)
-                .clip(RoundedCornerShape(3.dp))
-                .background(Retro.Bezel),
-        )
+        when (Retro.earpiece) {
+            EarpieceStyle.SLOT -> Box(
+                Modifier
+                    .width(56.dp)
+                    .height(6.dp)
+                    .clip(RoundedCornerShape(3.dp))
+                    .background(Retro.Bezel),
+            )
+            // Rows of speaker slots, like the old bricks.
+            EarpieceStyle.GRILLE -> Column(verticalArrangement = Arrangement.spacedBy(3.dp)) {
+                repeat(3) {
+                    Box(
+                        Modifier
+                            .width(72.dp)
+                            .height(4.dp)
+                            .clip(RoundedCornerShape(2.dp))
+                            .background(Retro.Bezel),
+                    )
+                }
+            }
+        }
         Spacer(Modifier.height(4.dp))
-        PixelText("T9 · FOLD", size = 14.dp, color = Retro.Chrome)
+        PixelText(Retro.brand, size = 14.dp, color = Retro.Chrome)
     }
+}
+
+/** The barrel hinge between the screen half and the keypad half of a flip phone. */
+@Composable
+private fun Hinge() {
+    val skin = Retro
+    Box(
+        Modifier
+            .fillMaxWidth()
+            .padding(vertical = 6.dp)
+            .height(14.dp)
+            .shadow(3.dp, RoundedCornerShape(7.dp))
+            .clip(RoundedCornerShape(7.dp))
+            .background(Brush.verticalGradient(listOf(skin.BodyDark, skin.Chrome, skin.BodyDark))),
+    )
 }
 
 // ---- Navigation cluster ----------------------------------------------------------------------
@@ -128,13 +158,18 @@ private fun ColumnScope.SoftKey(state: LauncherState, key: PhoneKey) {
         modifier = Modifier.fillMaxWidth().weight(0.42f),
         onLongClick = if (key == PhoneKey.SOFT_RIGHT) ({ state.onLongKey(key) }) else null,
     ) {
-        Box(
-            Modifier
-                .width(22.dp)
-                .height(3.dp)
-                .clip(RoundedCornerShape(2.dp))
-                .background(Retro.BodyDark.copy(alpha = 0.6f)),
-        )
+        val label = Retro.keyLabels[key]
+        if (label != null) {
+            KeyText(label, size = 13.dp, color = Retro.KeyText)
+        } else {
+            Box(
+                Modifier
+                    .width(22.dp)
+                    .height(3.dp)
+                    .clip(RoundedCornerShape(2.dp))
+                    .background(Retro.BodyDark.copy(alpha = 0.6f)),
+            )
+        }
     }
 }
 
@@ -149,12 +184,19 @@ private fun ColumnScope.CallKey(state: LauncherState, key: PhoneKey, mirrored: B
         shape = RoundedCornerShape(50),
         modifier = Modifier.fillMaxWidth().weight(0.58f),
     ) {
-        Handset(
-            hungUp = !isCall,
-            modifier = Modifier
-                .size(26.dp)
-                .graphicsLayer { scaleX = if (mirrored) -1f else 1f },
-        )
+        val glyph = if (isCall) Retro.CallGlyph else Retro.EndGlyph
+        val label = Retro.keyLabels[key]
+        if (label != null) {
+            KeyText(label, size = 15.dp, color = glyph)
+        } else {
+            Handset(
+                hungUp = !isCall,
+                color = glyph,
+                modifier = Modifier
+                    .size(26.dp)
+                    .graphicsLayer { scaleX = if (mirrored) -1f else 1f },
+            )
+        }
     }
 }
 
@@ -182,6 +224,7 @@ private fun Rocker(state: LauncherState, modifier: Modifier) {
 
 @Composable
 private fun Arrow(up: Boolean) {
+    val color = Retro.BodyDark.copy(alpha = 0.7f)
     Canvas(Modifier.size(14.dp, 9.dp)) {
         val path = Path().apply {
             if (up) {
@@ -191,18 +234,18 @@ private fun Arrow(up: Boolean) {
             }
             close()
         }
-        drawPath(path, Retro.BodyDark.copy(alpha = 0.7f))
+        drawPath(path, color)
     }
 }
 
 /** A chunky handset glyph; tilted down for the end key. */
 @Composable
-private fun Handset(hungUp: Boolean, modifier: Modifier) {
+private fun Handset(hungUp: Boolean, color: Color, modifier: Modifier) {
     Canvas(modifier.rotate(if (hungUp) 135f else 0f)) {
         val stroke = size.minDimension * 0.2f
         val inset = stroke / 2 + size.minDimension * 0.08f
         drawArc(
-            color = Color.White,
+            color = color,
             startAngle = 120f,
             sweepAngle = 120f,
             useCenter = false,
@@ -216,7 +259,7 @@ private fun Handset(hungUp: Boolean, modifier: Modifier) {
         val radius = (size.width - inset * 2) / 2
         for (angle in listOf(120.0, 240.0)) {
             val rad = Math.toRadians(angle)
-            drawCircle(Color.White, r, Offset(cx + radius * kotlin.math.cos(rad).toFloat(), cy + radius * kotlin.math.sin(rad).toFloat()))
+            drawCircle(color, r, Offset(cx + radius * kotlin.math.cos(rad).toFloat(), cy + radius * kotlin.math.sin(rad).toFloat()))
         }
     }
 }
@@ -227,9 +270,10 @@ private val KEY_ROWS = listOf("123", "456", "789", "*0#")
 
 @Composable
 private fun Keypad(state: LauncherState, mirrored: Boolean, modifier: Modifier) {
-    Column(modifier, verticalArrangement = Arrangement.spacedBy(9.dp)) {
+    val gap = Retro.keyGap
+    Column(modifier, verticalArrangement = Arrangement.spacedBy(gap * 0.75f)) {
         for (row in KEY_ROWS) {
-            Row(Modifier.fillMaxWidth().weight(1f), horizontalArrangement = Arrangement.spacedBy(12.dp)) {
+            Row(Modifier.fillMaxWidth().weight(1f), horizontalArrangement = Arrangement.spacedBy(gap)) {
                 for (c in if (mirrored) row.reversed() else row) {
                     DigitKey(state, c, Modifier.weight(1f).fillMaxHeight())
                 }
@@ -252,7 +296,7 @@ private fun DigitKey(state: LauncherState, c: Char, modifier: Modifier) {
         key = key,
         light = Retro.KeyLight,
         dark = Retro.KeyDark,
-        shape = RoundedCornerShape(percent = 42),
+        shape = RoundedCornerShape(percent = Retro.keyCornerPercent),
         modifier = modifier,
         onLongClick = if (isFavoriteKey) ({ state.onLongKey(key) }) else null,
     ) {

@@ -47,6 +47,13 @@ class MainActivity : ComponentActivity(), LauncherActions {
         setContent {
             val retroStatusBar = prefs.retroStatusBar
             LaunchedEffect(retroStatusBar) { showSystemStatusBar(!retroStatusBar) }
+            val lightBody = prefs.phoneStyle.skin.lightBody
+            LaunchedEffect(lightBody) {
+                WindowCompat.getInsetsController(window, window.decorView).apply {
+                    isAppearanceLightStatusBars = lightBody
+                    isAppearanceLightNavigationBars = lightBody
+                }
+            }
             // A launcher is the bottom of the stack: Back only steps back through the phone's menus.
             BackHandler { state.back() }
             LauncherRoot(state, widgetStore, widgets)

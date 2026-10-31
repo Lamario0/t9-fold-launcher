@@ -20,9 +20,18 @@ A personal home-screen launcher for the Galaxy Z Fold 5 that looks and works lik
 
 Long-press any app in a list for its options. Swipe down anywhere to open notifications.
 
+## Phone styles
+
+*Menu → Phone style* switches the look of both screens:
+
+- **Candybar**: navy body, green monochrome LCD (the default).
+- **Razr silver / Razr pink**: thin metal flip with a hinge, blue colour screen, and a flat keypad that glows blue.
+- **Clamshell**: glossy pearl flip with a hinge, sky-blue screen, and oval silver keys with blue lettering.
+- **80s brick**: charcoal body, speaker grille, red LED readout, and chunky rubber keys printed FCN / CLR / SND / END.
+
 ## Settings (Menu)
 
-Search mode, key sounds (tones / clicks / silent), vibration, Android or retro status bar, the unfold animation, mirroring of the inside keypad, colour or LCD-style icons, favourite keys, hidden apps, and a shortcut to set the launcher as your home app.
+Phone style, search mode, key sounds (tones / clicks / silent), vibration, Android or retro status bar, the unfold animation, mirroring of the inside keypad, colour or LCD-style icons, favourite keys, hidden apps, and a shortcut to set the launcher as your home app.
 
 ## Widgets
 

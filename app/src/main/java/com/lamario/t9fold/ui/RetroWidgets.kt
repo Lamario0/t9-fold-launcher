@@ -95,17 +95,18 @@ private fun CalendarWidget() {
 @Composable
 private fun BatteryWidget() {
     val status = LocalPhoneStatus.current
+    val ink = Retro.Ink
     Row(Modifier.fillMaxSize(), verticalAlignment = Alignment.CenterVertically) {
         Canvas(Modifier.fillMaxHeight(0.7f).width(110.dp)) {
             val stroke = 3.dp.toPx()
             val nub = size.width * 0.08f
-            drawRect(Retro.Ink, Offset.Zero, Size(size.width - nub, size.height), style = Stroke(stroke))
-            drawRect(Retro.Ink, Offset(size.width - nub, size.height * 0.3f), Size(nub, size.height * 0.4f))
+            drawRect(ink, Offset.Zero, Size(size.width - nub, size.height), style = Stroke(stroke))
+            drawRect(ink, Offset(size.width - nub, size.height * 0.3f), Size(nub, size.height * 0.4f))
             val bars = ((status.batteryPercent + 9) / 20).coerceIn(0, 5)
             val inner = size.width - nub - stroke * 4
             val bw = inner / 5
             for (i in 0 until bars) {
-                drawRect(Retro.Ink, Offset(stroke * 2 + i * bw, stroke * 2), Size(bw - stroke, size.height - stroke * 4))
+                drawRect(ink, Offset(stroke * 2 + i * bw, stroke * 2), Size(bw - stroke, size.height - stroke * 4))
             }
         }
         Spacer(Modifier.width(16.dp))

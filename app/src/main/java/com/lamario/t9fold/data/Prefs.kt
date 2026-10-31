@@ -6,6 +6,7 @@ import androidx.compose.runtime.mutableStateMapOf
 import androidx.compose.runtime.mutableStateOf
 import com.lamario.t9fold.search.SearchMode
 import com.lamario.t9fold.system.KeySound
+import com.lamario.t9fold.ui.PhoneStyle
 import kotlin.properties.ReadWriteProperty
 import kotlin.reflect.KProperty
 
@@ -13,6 +14,7 @@ import kotlin.reflect.KProperty
 class Prefs(context: Context) {
     private val sp: SharedPreferences = context.getSharedPreferences("t9fold", Context.MODE_PRIVATE)
 
+    var phoneStyle by enumPref("phone_style", PhoneStyle.CANDYBAR)
     var searchMode by enumPref("search_mode", SearchMode.MULTI_TAP)
     var keySound by enumPref("key_sound", KeySound.TONES)
     var vibration by boolPref("vibration", true)

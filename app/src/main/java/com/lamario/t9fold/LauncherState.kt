@@ -340,9 +340,7 @@ class LauncherState(
         is Screen.AppActions -> repo.byKey[s.appKey]?.let(::appActionItems) ?: emptyList()
         Screen.Folders -> listOf(LcdItem("new", "+ New folder") { startNaming(null, null) }) +
             sortedFolders.map(::folderItem)
-        is Screen.Folder -> prefs.folder(s.id)?.let { folder ->
-            folderApps(folder).map(::appItem) + LcdItem("edit", "+ Add apps") { push(Screen.FolderApps(s.id)) }
-        } ?: emptyList()
+        is Screen.Folder -> prefs.folder(s.id)?.let { folderApps(it).map(::appItem) } ?: emptyList()
         is Screen.FolderApps -> prefs.folder(s.id)?.let { folder ->
             visibleApps.map { app ->
                 LcdItem(app.key, app.label, app = app, checked = app.key in folder.apps) {
@@ -504,6 +502,7 @@ class LauncherState(
         Screen.Search -> "No apps"
         Screen.Recents -> "No recent apps"
         Screen.HiddenApps -> "No hidden apps"
+        is Screen.Folder -> "Empty folder"
         else -> "Empty"
     }
 }

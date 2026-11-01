@@ -26,7 +26,7 @@ Folders are lists on the LCD, like the folders on the old phones.
 
 - **Make one:** open an app's *Options*, choose *Add to folder*, then *+ New folder*. You can also use *Menu → Folders → + New folder*. Type the name on the keypad, old-phone style: tap 4 twice for H, pause, then tap 4 three times for i. 0 is a space, C deletes, and *Save* (the left soft key or green key) finishes.
 - **Find one:** folders are listed first on **0** (All apps). They also show up when you search, so typing G-A-M finds a "Games" folder.
-- **Inside a folder:** the green key opens the highlighted app. *+ Add apps* at the bottom lets you tick apps in or out. *Options* on an app there includes *Remove from folder*.
+- **Inside a folder:** just the folder's apps; the green key opens the highlighted one. *Options* on an app there includes *Remove from folder*. To tick several apps in or out at once, use the folder's *Add / remove apps* option.
 - **Folder options** (*Options* or long-press on a folder): open, add or remove apps, rename, delete (the apps stay installed), or put the folder on key 1, \* or #.
 
 ## Phone styles

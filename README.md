@@ -3,7 +3,7 @@
 A personal home-screen launcher for the Galaxy Z Fold 5 that looks and works like an old candybar phone.
 
 - **Cover screen:** a phone with an LCD and a T9 keypad. Swipe left for the widget page.
-- **Unfolded:** like an opened flip phone. The left half is the cover phone flipped face down (mirrored). The right half is a panel of office-phone speed keys.
+- **Unfolded:** like an opened flip phone. The left half is the cover phone flipped face down (mirrored). The right half opens on a panel of office-phone speed keys; swipe left for the widget page.
 
 ## Keys
 
@@ -55,7 +55,7 @@ The light is dim green on keys that are set, off on empty keys, and flashes ambe
 
 ## Widgets
 
-The widget page is one swipe left of the dialer on the cover screen. It starts blank. Tap **EDIT**, then **+ ADD WIDGET**. You can add any Android widget or a built-in retro one (pixel clock, calendar, battery). In edit mode, each widget can be moved up or down, made taller or shorter, or removed.
+The widget page is one swipe left of the dialer on the cover screen, and one swipe left of the speed keys when unfolded. Both show the same widgets. It starts blank. Tap **EDIT**, then **+ ADD WIDGET**. You can add any Android widget or a built-in retro one (pixel clock, calendar, battery). In edit mode, each widget can be moved up or down, made taller or shorter, or removed.
 
 ## Installing on the phone
 

@@ -56,7 +56,7 @@ fun LauncherRoot(state: LauncherState, store: WidgetStore, widgets: WidgetHostCo
             val isMain = maxWidth >= 600.dp
             Box(Modifier.fillMaxSize().statusBarsPadding().navigationBarsPadding()) {
                 if (isMain) {
-                    InsideLayout(state)
+                    InsideLayout(state, store, widgets)
                 } else {
                     CoverLayout(state, store, widgets)
                 }
@@ -107,13 +107,32 @@ private fun CoverLayout(state: LauncherState, store: WidgetStore, widgets: Widge
 
 /**
  * Unfolded: like a flip phone opened flat. The left half is the cover phone flipped face down
- * (mirrored); the right half is a panel of office-phone programmable keys.
+ * (mirrored). The right half opens on the office-phone speed keys; swipe for the widget page,
+ * the same one the cover screen shows.
  */
 @Composable
-private fun InsideLayout(state: LauncherState) {
+private fun InsideLayout(state: LauncherState, store: WidgetStore, widgets: WidgetHostController) {
+    val pager = rememberPagerState { 1 + WIDGET_PAGE_COUNT }
+    LaunchedEffect(state.homeSignal) {
+        if (state.homeSignal > 0) pager.animateScrollToPage(0)
+    }
     Row(Modifier.fillMaxSize()) {
         PhoneBody(state, mirrored = state.prefs.mirrorInside, modifier = Modifier.weight(1f).fillMaxHeight())
-        DeskKeysPanel(state, Modifier.weight(1f).fillMaxHeight())
+        Box(Modifier.weight(1f).fillMaxHeight()) {
+            HorizontalPager(
+                state = pager,
+                userScrollEnabled = false,
+                beyondViewportPageCount = 1,
+                modifier = Modifier.fillMaxSize().pagerSwipe(pager),
+            ) { page ->
+                if (page == 0) {
+                    DeskKeysPanel(state)
+                } else {
+                    WidgetPage(page - 1, state, store, widgets)
+                }
+            }
+            PageDots(pager, Modifier.align(Alignment.BottomCenter).padding(bottom = 8.dp))
+        }
     }
 }
 

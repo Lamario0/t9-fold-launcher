@@ -28,6 +28,10 @@ class Prefs(context: Context) {
     var retroIcons by boolPref("retro_icons", false)
     var hiddenApps by stringSetPref("hidden_apps")
     var recents by stringListPref("recents")
+    /** Read-only GitHub token for checking this private repo's releases. */
+    var githubToken by prefState(sp.getString("github_token", null)) { putString("github_token", it) }
+    var autoUpdate by boolPref("auto_update", true)
+    var lastUpdateCheck by prefState(sp.getLong("last_update_check", 0L)) { putLong("last_update_check", it) }
     var folders by prefState(readFolders()) { putString(KEY_FOLDERS, writeFolders(it)) }
         private set
 

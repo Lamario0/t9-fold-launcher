@@ -17,6 +17,7 @@ import com.lamario.t9fold.data.AppRepository
 import com.lamario.t9fold.data.Prefs
 import com.lamario.t9fold.system.KeyFeedback
 import com.lamario.t9fold.system.SystemActions
+import com.lamario.t9fold.system.Updater
 import com.lamario.t9fold.ui.LauncherRoot
 import com.lamario.t9fold.widgets.WidgetHostController
 import com.lamario.t9fold.widgets.WidgetStore
@@ -27,6 +28,7 @@ class MainActivity : ComponentActivity(), LauncherActions {
     private lateinit var feedback: KeyFeedback
     private lateinit var widgetStore: WidgetStore
     private lateinit var widgets: WidgetHostController
+    private lateinit var updater: Updater
     private lateinit var state: LauncherState
 
     override fun onCreate(savedInstanceState: Bundle?) {
@@ -41,7 +43,8 @@ class MainActivity : ComponentActivity(), LauncherActions {
         feedback = KeyFeedback(applicationContext)
         widgetStore = WidgetStore(applicationContext)
         widgets = WidgetHostController(this, widgetStore)
-        state = LauncherState(repo, prefs, this)
+        updater = Updater(applicationContext, prefs)
+        state = LauncherState(repo, prefs, updater, this)
         repo.start()
 
         setContent {
@@ -73,6 +76,7 @@ class MainActivity : ComponentActivity(), LauncherActions {
     override fun onStart() {
         super.onStart()
         widgets.startListening()
+        updater.checkIfDue()
     }
 
     override fun onStop() {
@@ -88,6 +92,7 @@ class MainActivity : ComponentActivity(), LauncherActions {
 
     override fun onDestroy() {
         repo.stop()
+        updater.stop()
         feedback.release()
         super.onDestroy()
     }

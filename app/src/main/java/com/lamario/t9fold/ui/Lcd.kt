@@ -46,6 +46,7 @@ import com.lamario.t9fold.Screen
 import com.lamario.t9fold.search.SearchInput
 import com.lamario.t9fold.search.SearchMode
 import com.lamario.t9fold.system.LocalPhoneStatus
+import com.lamario.t9fold.system.UpdateStatus
 import kotlinx.coroutines.delay
 
 @Composable
@@ -331,6 +332,20 @@ private fun IdleScreen(state: LauncherState, modifier: Modifier) {
         Spacer(Modifier.height(4.dp))
         RetroGames(Modifier.fillMaxWidth().weight(1f))
         Spacer(Modifier.height(4.dp))
-        PixelText(status.date, Modifier.fillMaxWidth(), size = 20.dp, align = TextAlign.Center)
+        val update = state.updater.status as? UpdateStatus.Available
+        if (update != null) {
+            PixelText(
+                "New build ${update.build}! Tap",
+                Modifier
+                    .fillMaxWidth()
+                    .background(Retro.Ink)
+                    .pointerInput(Unit) { detectTapGestures { state.open(Screen.Updates) } },
+                size = 20.dp,
+                color = Retro.Lcd,
+                align = TextAlign.Center,
+            )
+        } else {
+            PixelText(status.date, Modifier.fillMaxWidth(), size = 20.dp, align = TextAlign.Center)
+        }
     }
 }

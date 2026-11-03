@@ -40,7 +40,7 @@ Folders are lists on the LCD, like the folders on the old phones.
 
 ## Settings (Menu)
 
-Phone style, search mode, key sounds (tones / clicks / silent), vibration, Android or retro status bar, the unfold animation, mirroring of the inside keypad, colour or LCD-style icons, favourite keys, hidden apps, and a shortcut to set the launcher as your home app.
+Phone style, updates, search mode, key sounds (tones / clicks / silent), vibration, Android or retro status bar, the unfold animation, mirroring of the inside keypad, colour or LCD-style icons, favourite keys, hidden apps, and a shortcut to set the launcher as your home app.
 
 ## Widgets
 
@@ -56,6 +56,20 @@ Every push to `main` builds an APK with GitHub Actions and attaches it to a new 
 4. Press Home and choose **T9 Fold**, then **Always**. You can also use *Menu → Set as home app*, or *Settings → Apps → Choose default apps → Home app*.
 
 Later builds install over the old one and keep your settings. The debug signing key is committed on purpose so this keeps working.
+
+## Updating from inside the app
+
+The launcher can update itself from this repo's Releases. Because the repo is private, it needs a read-only GitHub token, set up once.
+
+1. On github.com, go to *Settings → Developer settings → Personal access tokens → Fine-grained tokens → Generate new token*.
+2. Under *Repository access*, choose *Only select repositories* and pick **t9-fold-launcher**.
+3. Under *Permissions → Repository permissions*, set **Contents** to **Read-only**. Leave everything else as it is.
+4. Generate the token and copy it on the phone, for example by opening github.com in the phone's browser.
+5. In the launcher, open *Menu → Updates → Paste token*.
+
+After that, the launcher checks for a new build every few hours when you go to the home screen. You can also choose *Menu → Updates → Check now*. When a newer build exists, the idle screen shows **New build N! Tap**. Choose *Install build N*: the APK downloads, and Android asks "Update this app?". The first time, Android also asks you to allow T9 Fold to install apps; allow it, then choose Install again.
+
+If your token expires, make a new one and paste it the same way. *Auto check* turns the background checks off; *Remove token* deletes the token from the phone.
 
 ## Building on a PC (optional)
 

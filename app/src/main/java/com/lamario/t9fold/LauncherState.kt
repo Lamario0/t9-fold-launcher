@@ -15,6 +15,8 @@ import com.lamario.t9fold.search.SearchIndex
 import com.lamario.t9fold.search.SearchInput
 import com.lamario.t9fold.search.SearchMode
 import com.lamario.t9fold.system.KeySound
+import com.lamario.t9fold.system.UpdateStatus
+import com.lamario.t9fold.system.Updater
 import com.lamario.t9fold.ui.PhoneStyle
 
 enum class PhoneKey(val char: Char? = null) {
@@ -63,6 +65,7 @@ sealed interface Screen {
     data object Favorites : Screen { override val numbered = true }
     data class AppActions(val appKey: String) : Screen { override val numbered = true }
     data object Folders : Screen
+    data object Updates : Screen { override val numbered = true }
     data class Folder(val id: Long) : Screen
     data class FolderApps(val id: Long) : Screen
     data class AddToFolder(val appKey: String) : Screen
@@ -91,6 +94,7 @@ class LcdItem(
 class LauncherState(
     private val repo: AppRepository,
     val prefs: Prefs,
+    val updater: Updater,
     private val actions: LauncherActions,
 ) {
     var input by mutableStateOf(SearchInput())
@@ -356,6 +360,7 @@ class LauncherState(
             }
         is Screen.FolderActions -> prefs.folder(s.id)?.let(::folderActionItems) ?: emptyList()
         is Screen.NameFolder -> emptyList()
+        Screen.Updates -> updateItems()
     }
 
     private fun appItem(app: AppEntry) = LcdItem(
@@ -364,6 +369,25 @@ class LauncherState(
         app = app,
         onLongPress = { push(Screen.AppActions(app.key)) },
     ) { launch(app) }
+
+    private fun updateItems(): List<LcdItem> {
+        val status = updater.status
+        val hasToken = prefs.githubToken != null
+        return listOfNotNull(
+            (status as? UpdateStatus.Available)?.let {
+                LcdItem("install", "Install build ${it.build}") { updater.install(it) }
+            },
+            LcdItem("check", "Check now", value = if (status is UpdateStatus.Available) null else status.label) {
+                updater.check()
+            },
+            LcdItem("version", "This phone", value = "Build ${updater.installedBuild}") {},
+            LcdItem("paste", "Paste token", value = if (hasToken) "Set" else "None") { updater.pasteToken() },
+            LcdItem("auto", "Auto check", value = if (prefs.autoUpdate) "On" else "Off") {
+                prefs.autoUpdate = !prefs.autoUpdate
+            },
+            if (hasToken) LcdItem("remove", "Remove token") { updater.removeToken() } else null,
+        )
+    }
 
     private fun folderItem(folder: AppFolder) = LcdItem(
         id = "folder:${folder.id}",
@@ -429,6 +453,11 @@ class LauncherState(
             setting(Setting.ICON_STYLE, if (prefs.retroIcons) "LCD" else "Colour"),
             LcdItem("favorites", "Favourite keys") { push(Screen.Favorites) },
             LcdItem("folders", "Folders", value = prefs.folders.size.toString()) { push(Screen.Folders) },
+            LcdItem(
+                "updates",
+                "Updates",
+                value = if (updater.status is UpdateStatus.Available) "New!" else "Build ${updater.installedBuild}",
+            ) { push(Screen.Updates) },
             LcdItem("hidden", "Hidden apps", value = prefs.hiddenApps.size.toString()) { push(Screen.HiddenApps) },
             LcdItem("home", "Set as home app") { actions.openHomeSettings() },
         )
@@ -482,6 +511,7 @@ class LauncherState(
         Screen.Favorites -> "Favourite keys"
         is Screen.AppActions -> repo.byKey[s.appKey]?.label ?: "App"
         Screen.Folders -> "Folders"
+        Screen.Updates -> "Updates"
         is Screen.Folder -> prefs.folder(s.id)?.name ?: "Folder"
         is Screen.FolderApps -> "Apps in ${prefs.folder(s.id)?.name ?: "folder"}"
         is Screen.AddToFolder -> "Add to folder"

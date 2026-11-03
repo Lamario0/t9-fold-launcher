@@ -56,7 +56,7 @@ fun LauncherRoot(state: LauncherState, store: WidgetStore, widgets: WidgetHostCo
             val isMain = maxWidth >= 600.dp
             Box(Modifier.fillMaxSize().statusBarsPadding().navigationBarsPadding()) {
                 if (isMain) {
-                    InsideLayout(state, store, widgets)
+                    InsideLayout(state)
                 } else {
                     CoverLayout(state, store, widgets)
                 }
@@ -81,7 +81,7 @@ fun LauncherRoot(state: LauncherState, store: WidgetStore, widgets: WidgetHostCo
     }
 }
 
-/** Cover screen: swipe between the phone and the widget pages. */
+/** Cover screen: swipe between the phone and the widget page. */
 @Composable
 private fun CoverLayout(state: LauncherState, store: WidgetStore, widgets: WidgetHostController) {
     val pager = rememberPagerState { 1 + WIDGET_PAGE_COUNT }
@@ -107,27 +107,13 @@ private fun CoverLayout(state: LauncherState, store: WidgetStore, widgets: Widge
 
 /**
  * Unfolded: like a flip phone opened flat. The left half is the cover phone flipped face down
- * (mirrored); the right half shows the same widget pages as the cover screen.
+ * (mirrored); the right half is a panel of office-phone programmable keys.
  */
 @Composable
-private fun InsideLayout(state: LauncherState, store: WidgetStore, widgets: WidgetHostController) {
-    val pager = rememberPagerState { WIDGET_PAGE_COUNT }
-    LaunchedEffect(state.homeSignal) {
-        if (state.homeSignal > 0) pager.animateScrollToPage(0)
-    }
+private fun InsideLayout(state: LauncherState) {
     Row(Modifier.fillMaxSize()) {
         PhoneBody(state, mirrored = state.prefs.mirrorInside, modifier = Modifier.weight(1f).fillMaxHeight())
-        Box(Modifier.weight(1f).fillMaxHeight()) {
-            HorizontalPager(
-                state = pager,
-                userScrollEnabled = false,
-                beyondViewportPageCount = 1,
-                modifier = Modifier.fillMaxSize().pagerSwipe(pager),
-            ) { page ->
-                WidgetPage(page, state, store, widgets)
-            }
-            PageDots(pager, Modifier.align(Alignment.BottomCenter).padding(bottom = 8.dp))
-        }
+        DeskKeysPanel(state, Modifier.weight(1f).fillMaxHeight())
     }
 }
 

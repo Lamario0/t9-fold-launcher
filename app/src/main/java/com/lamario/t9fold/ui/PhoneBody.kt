@@ -309,7 +309,7 @@ private fun DigitKey(state: LauncherState, c: Char, modifier: Modifier) {
 }
 
 /**
- * A plastic key. Sound/vibration fire on touch-down like a real keypad; the action fires on release.
+ * A keypad key. Sound/vibration fire on touch-down like a real keypad; the action fires on release.
  * Without a long-press action, holding the key still counts as a normal press.
  */
 @Composable
@@ -322,8 +322,32 @@ fun RetroKey(
     modifier: Modifier = Modifier,
     onLongClick: (() -> Unit)? = null,
     content: @Composable BoxScope.() -> Unit,
+) = PlasticKey(
+    light = light,
+    dark = dark,
+    shape = shape,
+    modifier = modifier,
+    onPress = { state.feedback(key) },
+    onClick = { state.onKey(key) },
+    onLongClick = onLongClick,
+    content = content,
+)
+
+/** A plastic button that sinks while held. */
+@Composable
+fun PlasticKey(
+    light: Color,
+    dark: Color,
+    shape: Shape,
+    modifier: Modifier = Modifier,
+    onPress: () -> Unit,
+    onClick: () -> Unit,
+    onLongClick: (() -> Unit)? = null,
+    content: @Composable BoxScope.() -> Unit,
 ) {
     var pressed by remember { mutableStateOf(false) }
+    val press by rememberUpdatedState(onPress)
+    val click by rememberUpdatedState(onClick)
     val longClick by rememberUpdatedState(onLongClick)
     val elevation: Dp = if (pressed) 1.dp else 4.dp
     Box(
@@ -333,16 +357,16 @@ fun RetroKey(
             .clip(shape)
             .background(Brush.verticalGradient(if (pressed) listOf(dark, light) else listOf(light, dark)))
             .border(1.dp, Color.Black.copy(alpha = 0.22f), shape)
-            .pointerInput(key) {
+            .pointerInput(Unit) {
                 detectTapGestures(
                     onPress = {
                         pressed = true
-                        state.feedback(key)
+                        press()
                         tryAwaitRelease()
                         pressed = false
                     },
-                    onLongPress = { longClick?.invoke() ?: state.onKey(key) },
-                    onTap = { state.onKey(key) },
+                    onLongPress = { longClick?.invoke() ?: click() },
+                    onTap = { click() },
                 )
             },
         contentAlignment = Alignment.Center,

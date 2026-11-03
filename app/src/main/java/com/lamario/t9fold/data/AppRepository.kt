@@ -5,6 +5,7 @@ import android.content.Context
 import android.content.Intent
 import android.content.pm.LauncherActivityInfo
 import android.content.pm.LauncherApps
+import android.content.pm.ShortcutInfo
 import android.graphics.Bitmap
 import android.net.Uri
 import android.os.Handler
@@ -34,6 +35,17 @@ data class AppEntry(
     val component: ComponentName,
     val user: UserHandle,
     internal val info: LauncherActivityInfo,
+)
+
+/** A shortcut an app offers on long-press, e.g. a specific chat or "New tab". */
+data class ShortcutEntry(
+    val packageName: String,
+    val id: String,
+    val label: String,
+    val userSerial: Long,
+    /** Key of the app it belongs to, for grouping. */
+    val appKey: String,
+    val appLabel: String,
 )
 
 /** Full-colour icon, plus a tiny copy that is drawn blown-up for the pixelated LCD style. */
@@ -106,6 +118,54 @@ class AppRepository(private val context: Context) {
     } catch (e: Exception) {
         Log.w(TAG, "No icon for ${app.key}", e)
         null
+    }
+
+    /** App shortcuts are only shared with the default home app. */
+    val canUseShortcuts: Boolean
+        get() = runCatching { launcherApps.hasShortcutHostPermission() }.getOrDefault(false)
+
+    fun shortcuts(): List<ShortcutEntry> {
+        if (!canUseShortcuts) return emptyList()
+        val query = LauncherApps.ShortcutQuery().setQueryFlags(
+            LauncherApps.ShortcutQuery.FLAG_MATCH_DYNAMIC or
+                LauncherApps.ShortcutQuery.FLAG_MATCH_MANIFEST or
+                LauncherApps.ShortcutQuery.FLAG_MATCH_PINNED,
+        )
+        return userManager.userProfiles.flatMap { user ->
+            val serial = userManager.getSerialNumberForUser(user)
+            runCatching { launcherApps.getShortcuts(query, user) }.getOrNull().orEmpty()
+                .filter(ShortcutInfo::isEnabled)
+                .map { info ->
+                    val appKey = info.activity?.let { "${it.flattenToShortString()}@$serial" }
+                        ?: apps.firstOrNull { it.component.packageName == info.`package` && it.user == user }?.key
+                        ?: "${info.`package`}@$serial"
+                    ShortcutEntry(
+                        packageName = info.`package`,
+                        id = info.id,
+                        label = (info.shortLabel ?: info.longLabel ?: info.id).toString(),
+                        userSerial = serial,
+                        appKey = appKey,
+                        appLabel = byKey[appKey]?.label
+                            ?: apps.firstOrNull { it.component.packageName == info.`package` }?.label
+                            ?: info.`package`,
+                    )
+                }
+        }.distinctBy { Triple(it.userSerial, it.packageName, it.id) }
+    }
+
+    fun startShortcut(userSerial: Long, packageName: String, id: String): Boolean = try {
+        launcherApps.startShortcut(packageName, id, null, null, userManager.getUserForSerialNumber(userSerial))
+        true
+    } catch (e: Exception) {
+        Log.w(TAG, "Could not start shortcut $packageName/$id", e)
+        false
+    }
+
+    /** Replaces the set of this package's shortcuts that the launcher holds on to. */
+    fun pinShortcuts(userSerial: Long, packageName: String, ids: List<String>) {
+        runCatching {
+            launcherApps.pinShortcuts(packageName, ids, userManager.getUserForSerialNumber(userSerial))
+        }.onFailure { Log.w(TAG, "Could not pin shortcuts for $packageName", it) }
     }
 
     fun launch(app: AppEntry) {

@@ -38,7 +38,7 @@ import com.lamario.t9fold.widgets.WidgetHostController
 import com.lamario.t9fold.widgets.WidgetItem
 import com.lamario.t9fold.widgets.WidgetStore
 
-/** One widget page. Blank until you tap EDIT and add something. */
+/** The widget page. Blank until you tap EDIT and add something. */
 @Composable
 fun WidgetPage(
     page: Int,
@@ -61,7 +61,7 @@ fun WidgetPage(
             Modifier.fillMaxWidth().padding(horizontal = 16.dp, vertical = 6.dp),
             verticalAlignment = Alignment.CenterVertically,
         ) {
-            PixelText("WIDGETS ${page + 1}", Modifier.weight(1f), size = 18.dp, color = Retro.ChromeDark)
+            PixelText("WIDGETS", Modifier.weight(1f), size = 18.dp, color = Retro.ChromeDark)
             Chip(if (editing) "DONE" else "EDIT") {
                 state.editingWidgetPage = if (editing) null else page
             }

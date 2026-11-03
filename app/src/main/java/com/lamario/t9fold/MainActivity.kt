@@ -16,6 +16,7 @@ import com.lamario.t9fold.data.AppEntry
 import com.lamario.t9fold.data.AppRepository
 import com.lamario.t9fold.data.Prefs
 import com.lamario.t9fold.system.KeyFeedback
+import com.lamario.t9fold.system.QuickActions
 import com.lamario.t9fold.system.SystemActions
 import com.lamario.t9fold.system.Updater
 import com.lamario.t9fold.ui.LauncherRoot
@@ -29,6 +30,7 @@ class MainActivity : ComponentActivity(), LauncherActions {
     private lateinit var widgetStore: WidgetStore
     private lateinit var widgets: WidgetHostController
     private lateinit var updater: Updater
+    private lateinit var quick: QuickActions
     private lateinit var state: LauncherState
 
     override fun onCreate(savedInstanceState: Bundle?) {
@@ -44,7 +46,8 @@ class MainActivity : ComponentActivity(), LauncherActions {
         widgetStore = WidgetStore(applicationContext)
         widgets = WidgetHostController(this, widgetStore)
         updater = Updater(applicationContext, prefs)
-        state = LauncherState(repo, prefs, updater, this)
+        quick = QuickActions(applicationContext)
+        state = LauncherState(repo, prefs, updater, quick, this)
         repo.start()
 
         setContent {
@@ -76,12 +79,14 @@ class MainActivity : ComponentActivity(), LauncherActions {
     override fun onStart() {
         super.onStart()
         widgets.startListening()
+        quick.start()
         updater.checkIfDue()
     }
 
     override fun onStop() {
         super.onStop()
         widgets.stopListening()
+        quick.stop()
     }
 
     /** Home pressed while we're already in front: back to the idle screen and the dialer page. */

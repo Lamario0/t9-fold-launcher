@@ -14,6 +14,15 @@ import kotlin.reflect.KProperty
 
 data class AppFolder(val id: Long, val name: String, val apps: List<String>)
 
+enum class DeskKeyType { APP, FOLDER, SHORTCUT, QUICK }
+
+/**
+ * What a desk key on the unfolded screen does. [value] is an app key, a folder id, a shortcut as
+ * "userSerial|package|id", or a QuickAction name. [label] is kept for shortcuts, whose names
+ * can't be looked up cheaply.
+ */
+data class DeskKey(val type: DeskKeyType, val value: String, val label: String)
+
 /** Settings backed by SharedPreferences and exposed as Compose state, so the UI updates live. */
 class Prefs(context: Context) {
     private val sp: SharedPreferences = context.getSharedPreferences("t9fold", Context.MODE_PRIVATE)
@@ -32,6 +41,8 @@ class Prefs(context: Context) {
     var githubToken by prefState(sp.getString("github_token", null)) { putString("github_token", it) }
     var autoUpdate by boolPref("auto_update", true)
     var lastUpdateCheck by prefState(sp.getLong("last_update_check", 0L)) { putLong("last_update_check", it) }
+    var deskKeys by prefState(readDeskKeys()) { putString(KEY_DESK_KEYS, writeDeskKeys(it)) }
+        private set
     var folders by prefState(readFolders()) { putString(KEY_FOLDERS, writeFolders(it)) }
         private set
 
@@ -49,6 +60,22 @@ class Prefs(context: Context) {
         hiddenApps = if (appKey in hiddenApps) hiddenApps - appKey else hiddenApps + appKey
     }
 
+    fun setDeskKey(index: Int, key: DeskKey?) {
+        deskKeys = if (key == null) deskKeys - index else deskKeys + (index to key)
+    }
+
+    private fun readDeskKeys(): Map<Int, DeskKey> = runCatching {
+        val arr = JSONArray(sp.getString(KEY_DESK_KEYS, "[]"))
+        (0 until arr.length()).map { arr.getJSONObject(it) }.mapNotNull { o ->
+            val type = DeskKeyType.entries.firstOrNull { it.name == o.optString("t") } ?: return@mapNotNull null
+            o.getInt("i") to DeskKey(type, o.getString("v"), o.optString("l"))
+        }.toMap()
+    }.getOrDefault(emptyMap())
+
+    private fun writeDeskKeys(keys: Map<Int, DeskKey>): String = JSONArray().apply {
+        keys.forEach { (i, k) -> put(JSONObject().put("i", i).put("t", k.type.name).put("v", k.value).put("l", k.label)) }
+    }.toString()
+
     fun folder(id: Long): AppFolder? = folders.firstOrNull { it.id == id }
 
     fun createFolder(name: String, firstApp: String?): Long {
@@ -65,6 +92,7 @@ class Prefs(context: Context) {
     fun deleteFolder(id: Long) {
         folders = folders.filter { it.id != id }
         favorites.filterValues { it == folderFavorite(id) }.keys.toList().forEach { setFavorite(it, null) }
+        deskKeys = deskKeys.filterValues { !(it.type == DeskKeyType.FOLDER && it.value == id.toString()) }
     }
 
     fun toggleInFolder(id: Long, appKey: String) {
@@ -128,6 +156,7 @@ class Prefs(context: Context) {
     companion object {
         val FAVORITE_KEYS = listOf('1', '*', '#')
         private const val KEY_FOLDERS = "folders"
+        private const val KEY_DESK_KEYS = "desk_keys"
         private const val FOLDER_PREFIX = "folder:"
 
         /** A favourite key can hold an app key, or a folder written as "folder:<id>". */

@@ -5,8 +5,8 @@ import androidx.compose.runtime.mutableStateListOf
 import org.json.JSONArray
 import org.json.JSONObject
 
-/** Widget pages are shared: the cover screen's widget pages and the main screen's right half show the same list. */
-const val WIDGET_PAGE_COUNT = 2
+/** One widget page, swiped to from the cover screen's dialer. */
+const val WIDGET_PAGE_COUNT = 1
 
 enum class RetroWidgetType(val title: String, val defaultHeightDp: Int) {
     CLOCK("Pixel clock", 170),
@@ -74,7 +74,9 @@ class WidgetStore(context: Context) {
             }
         }.getOrDefault(emptyList())
         parsed.flatten().maxOfOrNull { it.uid }?.let { lastUid = it }
-        return List(WIDGET_PAGE_COUNT) { parsed.getOrElse(it) { emptyList() } }
+        // Widgets saved on pages that no longer exist move onto the last page, so none are lost.
+        val kept = parsed.take(WIDGET_PAGE_COUNT - 1) + listOf(parsed.drop(WIDGET_PAGE_COUNT - 1).flatten())
+        return List(WIDGET_PAGE_COUNT) { kept.getOrElse(it) { emptyList() } }
     }
 
     private fun save() {

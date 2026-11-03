@@ -2,8 +2,8 @@
 
 A personal home-screen launcher for the Galaxy Z Fold 5 that looks and works like an old candybar phone.
 
-- **Cover screen:** a phone with an LCD and a T9 keypad. Swipe left for two widget pages.
-- **Unfolded:** like an opened flip phone. The left half is the cover phone flipped face down (mirrored). The right half shows the same two widget pages as the cover screen.
+- **Cover screen:** a phone with an LCD and a T9 keypad. Swipe left for the widget page.
+- **Unfolded:** like an opened flip phone. The left half is the cover phone flipped face down (mirrored). The right half is a panel of office-phone speed keys.
 
 ## Keys
 
@@ -42,9 +42,20 @@ Folders are lists on the LCD, like the folders on the old phones.
 
 Phone style, updates, search mode, key sounds (tones / clicks / silent), vibration, Android or retro status bar, the unfold animation, mirroring of the inside keypad, colour or LCD-style icons, favourite keys, hidden apps, and a shortcut to set the launcher as your home app.
 
+## Speed keys (unfolded screen)
+
+The right half of the unfolded screen has 16 programmable keys, like an office desk phone. Each has a plastic button, a status light, and a typed paper label.
+
+- **Tap** a key (or its label) to use it. An empty key asks what it should do.
+- **Hold** a key to change it. The choice appears on the phone's screen on the left: *Apps*, *Folders*, *App shortcuts*, *Quick actions*, or *Clear key*.
+- **App shortcuts** are the extras apps offer on a long-press, such as a specific chat, "New tab", or directions home. They only appear while T9 Fold is your home app.
+- **Quick actions:** Flashlight (a real on/off toggle; its light glows green while on), Wi-Fi, Internet, Bluetooth, Volume, Do not disturb, Notifications, Quick settings, Camera, and Settings. Android doesn't let apps switch Wi-Fi or Bluetooth directly, so those open the system panel or settings page.
+
+The light is dim green on keys that are set, off on empty keys, and flashes amber when pressed.
+
 ## Widgets
 
-Widget pages start blank. Tap **EDIT** on a widget page, then **+ ADD WIDGET**. You can add any Android widget or a built-in retro one (pixel clock, calendar, battery). In edit mode, each widget can be moved up or down, made taller or shorter, or removed. The cover screen and the unfolded screen share the same pages.
+The widget page is one swipe left of the dialer on the cover screen. It starts blank. Tap **EDIT**, then **+ ADD WIDGET**. You can add any Android widget or a built-in retro one (pixel clock, calendar, battery). In edit mode, each widget can be moved up or down, made taller or shorter, or removed.
 
 ## Installing on the phone
 

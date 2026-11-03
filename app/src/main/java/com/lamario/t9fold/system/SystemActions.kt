@@ -18,6 +18,17 @@ object SystemActions {
         }
     }
 
+    /** Pulls the shade all the way down to the quick settings tiles. */
+    @SuppressLint("WrongConstant")
+    fun expandQuickSettings(context: Context) {
+        try {
+            val service = context.getSystemService("statusbar")
+            Class.forName("android.app.StatusBarManager").getMethod("expandSettingsPanel").invoke(service)
+        } catch (e: Exception) {
+            Log.w("SystemActions", "Could not open quick settings", e)
+        }
+    }
+
     fun openHomeSettings(context: Context) {
         runCatching {
             context.startActivity(Intent(Settings.ACTION_HOME_SETTINGS).addFlags(Intent.FLAG_ACTIVITY_NEW_TASK))

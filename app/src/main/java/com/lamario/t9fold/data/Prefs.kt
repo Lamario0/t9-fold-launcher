@@ -27,7 +27,7 @@ data class DeskKey(val type: DeskKeyType, val value: String, val label: String)
 class Prefs(context: Context) {
     private val sp: SharedPreferences = context.getSharedPreferences("t9fold", Context.MODE_PRIVATE)
 
-    var phoneStyle by enumPref("phone_style", PhoneStyle.CANDYBAR)
+    var phoneStyle by enumPref("phone_style", PhoneStyle.NOKIA_3310)
     var searchMode by enumPref("search_mode", SearchMode.MULTI_TAP)
     var keySound by enumPref("key_sound", KeySound.TONES)
     var vibration by boolPref("vibration", true)

@@ -86,7 +86,7 @@ fun KeyText(text: String, size: Dp, color: Color, modifier: Modifier = Modifier,
 @Composable
 fun LcdPanel(
     modifier: Modifier = Modifier,
-    bezel: Dp = 9.dp,
+    bezel: Dp = Retro.bezelWidth,
     content: @Composable BoxScope.() -> Unit,
 ) {
     Box(

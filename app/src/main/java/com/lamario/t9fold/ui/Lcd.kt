@@ -30,6 +30,7 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.geometry.Size
+import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.FilterQuality
 import androidx.compose.ui.input.nestedscroll.nestedScroll
@@ -88,15 +89,24 @@ fun LcdContent(state: LauncherState, mirrored: Boolean) {
 
 @Composable
 private fun LcdHeader(state: LauncherState) {
-    Row(Modifier.fillMaxWidth().padding(bottom = 2.dp), verticalAlignment = Alignment.CenterVertically) {
+    val bar = Retro.HeaderBar
+    val ink = if (bar != null) Retro.HeaderInk else Retro.Ink
+    Row(
+        Modifier
+            .fillMaxWidth()
+            .then(if (bar != null) Modifier.background(Brush.verticalGradient(listOf(bar.copy(alpha = 0.85f), bar))) else Modifier)
+            .padding(horizontal = if (bar != null) 6.dp else 0.dp, vertical = 2.dp),
+        verticalAlignment = Alignment.CenterVertically,
+    ) {
         if (state.screen == Screen.Search) {
-            PixelText(queryText(state), Modifier.weight(1f), size = 26.dp)
-            PixelText("${state.resultCount}", size = 20.dp)
+            PixelText(queryText(state), Modifier.weight(1f), size = 26.dp, color = ink)
+            PixelText("${state.resultCount}", size = 20.dp, color = ink)
         } else {
-            PixelText(state.title(), Modifier.weight(1f), size = 24.dp)
+            PixelText(state.title(), Modifier.weight(1f), size = 24.dp, color = ink)
         }
     }
-    Box(Modifier.fillMaxWidth().height(2.dp).background(Retro.Ink))
+    // Monochrome screens underline the title instead of using a bar.
+    if (bar == null) Box(Modifier.fillMaxWidth().height(2.dp).background(Retro.Ink))
     Spacer(Modifier.height(3.dp))
 }
 
@@ -118,7 +128,13 @@ private fun queryText(state: LauncherState): AnnotatedString {
             input.slots.forEachIndexed { i, slot ->
                 val text = if (slot.isWildcard) "[${slot.label}]" else slot.label
                 if (i == input.slots.lastIndex && input.composing) {
-                    withStyle(SpanStyle(background = Retro.Ink, color = Retro.Lcd)) { append(text) }
+                    // Inverted against whatever the title sits on: the LCD, or a coloured title bar.
+                    val inverted = if (Retro.HeaderBar != null) {
+                        SpanStyle(background = Retro.HeaderInk, color = Retro.HeaderBar!!)
+                    } else {
+                        SpanStyle(background = Retro.Ink, color = Retro.Lcd)
+                    }
+                    withStyle(inverted) { append(text) }
                 } else {
                     append(text)
                 }
@@ -174,14 +190,14 @@ private fun LcdList(state: LauncherState) {
 
 @Composable
 private fun LcdRow(state: LauncherState, item: LcdItem, number: Int?, selected: Boolean, onTap: () -> Unit) {
-    val ink = if (selected) Retro.Lcd else Retro.Ink
+    val ink = if (selected) Retro.HighlightInk else Retro.Ink
     val tap by rememberUpdatedState(onTap)
     val longPress by rememberUpdatedState(item.onLongPress)
     Row(
         Modifier
             .fillMaxWidth()
             .height(38.dp)
-            .background(if (selected) Retro.Ink else Color.Transparent)
+            .background(if (selected) Retro.Highlight else Color.Transparent)
             .pointerInput(item.id) {
                 detectTapGestures(
                     onTap = { tap() },
@@ -252,7 +268,7 @@ private fun NameEntryScreen(state: LauncherState) {
     val text = buildAnnotatedString {
         if (entry.composing && entry.text.isNotEmpty()) {
             append(entry.text.dropLast(1))
-            withStyle(SpanStyle(background = Retro.Ink, color = Retro.Lcd)) { append(entry.text.last()) }
+            withStyle(SpanStyle(background = Retro.Highlight, color = Retro.HighlightInk)) { append(entry.text.last()) }
         } else {
             append(entry.text)
             append(if (cursorOn) "_" else " ")
@@ -275,11 +291,24 @@ private fun RadioBox(checked: Boolean, ink: Color) {
 
 @Composable
 private fun SoftLabels(state: LauncherState, mirrored: Boolean) {
-    val (left, center, right) = state.softLabels()
-    Row(Modifier.fillMaxWidth().padding(top = 2.dp), verticalAlignment = Alignment.CenterVertically) {
-        PixelText(if (mirrored) right else left, Modifier.weight(1f), size = 20.dp)
-        PixelText(center, Modifier.weight(1f), size = 20.dp, align = TextAlign.Center)
-        PixelText(if (mirrored) left else right, Modifier.weight(1f), size = 20.dp, align = TextAlign.End)
+    // The 3310 has one Navi key, so its screen shows a single centred label.
+    val (left, center, right) = if (Retro.layout == BodyLayout.NOKIA_3310) {
+        Triple("", state.naviLabel(), "")
+    } else {
+        state.softLabels()
+    }
+    val bar = Retro.SoftBar
+    val ink = if (bar != null) Retro.SoftInk else Retro.Ink
+    Row(
+        Modifier
+            .fillMaxWidth()
+            .padding(top = 2.dp)
+            .then(if (bar != null) Modifier.background(bar).padding(horizontal = 6.dp) else Modifier),
+        verticalAlignment = Alignment.CenterVertically,
+    ) {
+        PixelText(if (mirrored) right else left, Modifier.weight(1f), size = 20.dp, color = ink)
+        PixelText(center, Modifier.weight(1f), size = 20.dp, color = ink, align = TextAlign.Center)
+        PixelText(if (mirrored) left else right, Modifier.weight(1f), size = 20.dp, color = ink, align = TextAlign.End)
     }
 }
 
@@ -338,10 +367,10 @@ private fun IdleScreen(state: LauncherState, modifier: Modifier) {
                 "New build ${update.build}! Tap",
                 Modifier
                     .fillMaxWidth()
-                    .background(Retro.Ink)
+                    .background(Retro.Highlight)
                     .pointerInput(Unit) { detectTapGestures { state.open(Screen.Updates) } },
                 size = 20.dp,
-                color = Retro.Lcd,
+                color = Retro.HighlightInk,
                 align = TextAlign.Center,
             )
         } else {

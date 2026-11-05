@@ -27,7 +27,13 @@ import com.lamario.t9fold.ui.PhoneStyle
 enum class PhoneKey(val char: Char? = null) {
     K1('1'), K2('2'), K3('3'), K4('4'), K5('5'), K6('6'), K7('7'), K8('8'), K9('9'),
     STAR('*'), K0('0'), HASH('#'),
-    SOFT_LEFT, SOFT_RIGHT, UP, DOWN, CALL, END;
+    SOFT_LEFT, SOFT_RIGHT, UP, DOWN, CALL, END,
+
+    /** The big centre key: Menu from the idle screen, otherwise opens/selects the highlighted row. */
+    NAVI,
+
+    // Dedicated keys some phone styles have.
+    MENU, APPS, RECENTS, QUICK_SETTINGS, VOLUME;
 
     companion object {
         fun of(c: Char): PhoneKey = entries.first { it.char == c }
@@ -283,18 +289,17 @@ class LauncherState(
             PhoneKey.DOWN -> moveSelection(1)
             PhoneKey.END -> resetToIdle()
             PhoneKey.CALL -> if (screen == Screen.Idle) open(Screen.Recents) else activateSelected()
-            PhoneKey.SOFT_LEFT -> when (screen) {
-                Screen.Idle -> open(Screen.Menu)
-                Screen.Search, Screen.AllApps, Screen.Recents, Screen.Folders, is Screen.Folder -> {
-                    val item = selectedItem()
-                    when {
-                        item?.app != null -> push(Screen.AppActions(item.app.key))
-                        item?.folderId != null -> push(Screen.FolderActions(item.folderId))
-                        else -> item?.onSelect?.invoke()
-                    }
-                }
+            PhoneKey.SOFT_LEFT -> when {
+                screen == Screen.Idle -> open(Screen.Menu)
+                hasOptions() -> openOptions()
                 else -> activateSelected()
             }
+            PhoneKey.NAVI -> if (screen == Screen.Idle) open(Screen.Menu) else activateSelected()
+            PhoneKey.MENU -> open(Screen.Menu)
+            PhoneKey.APPS -> open(Screen.AllApps)
+            PhoneKey.RECENTS -> open(Screen.Recents)
+            PhoneKey.QUICK_SETTINGS -> quick.run(QuickAction.QUICK_SETTINGS)
+            PhoneKey.VOLUME -> quick.run(QuickAction.VOLUME)
             PhoneKey.SOFT_RIGHT -> if (screen == Screen.Search) {
                 input = input.backspace()
                 selection = 0
@@ -312,10 +317,33 @@ class LauncherState(
             return
         }
         when (key) {
+            PhoneKey.NAVI -> if (hasOptions()) openOptions() else onKey(key)
             PhoneKey.SOFT_RIGHT -> resetToIdle()
             PhoneKey.K1, PhoneKey.STAR, PhoneKey.HASH -> open(Screen.PickFavorite(key.char!!))
             else -> onKey(key)
         }
+    }
+
+    /** Screens whose rows (apps, folders) have an Options menu. */
+    private fun hasOptions(): Boolean = when (screen) {
+        Screen.Search, Screen.AllApps, Screen.Recents, Screen.Folders, is Screen.Folder -> true
+        else -> false
+    }
+
+    private fun openOptions() {
+        val item = selectedItem()
+        when {
+            item?.app != null -> push(Screen.AppActions(item.app.key))
+            item?.folderId != null -> push(Screen.FolderActions(item.folderId))
+            else -> item?.onSelect?.invoke()
+        }
+    }
+
+    /** Held up/down: keep moving, but stop at the ends instead of wrapping around. */
+    fun scrollRepeat(delta: Int) {
+        val size = items().size
+        if (size == 0) return
+        selection = (selection + delta).coerceIn(0, size - 1)
     }
 
     private fun onDigit(c: Char) {
@@ -349,7 +377,7 @@ class LauncherState(
 
     private fun onNameKey(screen: Screen.NameFolder, key: PhoneKey) {
         when (key) {
-            PhoneKey.SOFT_LEFT, PhoneKey.CALL -> {
+            PhoneKey.SOFT_LEFT, PhoneKey.CALL, PhoneKey.NAVI -> {
                 val name = nameEntry.text.trim().ifEmpty { "Folder ${prefs.folders.size + 1}" }
                 if (screen.folderId == null) {
                     prefs.createFolder(name, screen.appKey)
@@ -360,8 +388,7 @@ class LauncherState(
             }
             PhoneKey.SOFT_RIGHT -> if (nameEntry.text.isEmpty()) back() else nameEntry = nameEntry.backspace()
             PhoneKey.END -> resetToIdle()
-            PhoneKey.UP, PhoneKey.DOWN -> Unit
-            else -> nameEntry = nameEntry.press(key.char!!, SystemClock.uptimeMillis())
+            else -> key.char?.let { nameEntry = nameEntry.press(it, SystemClock.uptimeMillis()) }
         }
     }
 
@@ -646,6 +673,14 @@ class LauncherState(
         is Screen.AddToFolder -> "Add to folder"
         is Screen.FolderActions -> prefs.folder(s.id)?.name ?: "Folder"
         is Screen.NameFolder -> if (s.folderId == null) "New folder" else "Rename folder"
+    }
+
+    /** What the single Navi key does right now, for phones that have one. */
+    fun naviLabel(): String = when (screen) {
+        Screen.Idle -> "Menu"
+        Screen.Search, Screen.AllApps, Screen.Recents, Screen.Folders, is Screen.Folder -> "Open"
+        is Screen.NameFolder -> "Save"
+        else -> "Select"
     }
 
     /** Labels shown above the left soft key, green key, and right soft key. */

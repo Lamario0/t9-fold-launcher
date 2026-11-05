@@ -16,7 +16,7 @@ A personal home-screen launcher for the Galaxy Z Fold 5 that looks and works lik
 | **Red** | Back to the idle screen. |
 | **Left soft key** | *Menu* (settings) on the idle screen. *Options* on an app: info, uninstall, hide, assign to a favourite key. |
 | **Right soft key (C)** | Delete a letter / go back. Hold to clear everything. |
-| **Up / Down** | Move the highlight. |
+| **Up / Down** | Move the highlight. Hold to keep scrolling; it speeds up the longer you hold, and stops at the top or bottom of the list. |
 
 Long-press any app in a list for its options. Swipe down anywhere to open notifications.
 
@@ -33,10 +33,10 @@ Folders are lists on the LCD, like the folders on the old phones.
 
 *Menu → Phone style* switches the look of both screens:
 
-- **Candybar**: navy body, green monochrome LCD (the default).
-- **Razr silver / Razr pink**: thin metal flip with a hinge, blue colour screen, and a flat keypad that glows blue.
-- **Clamshell**: glossy pearl flip with a hinge, sky-blue screen, and oval silver keys with blue lettering.
-- **80s brick**: charcoal body, speaker grille, red LED readout, and chunky rubber keys printed FCN / CLR / SND / END.
+- **Nokia 3310** (the default): navy body, earpiece slots, yellow-green LCD, and wide oval keys in a smile. Under the screen sit the C key, the big blue Navi key on a silver arc, and the up/down scroll key. The Navi key opens Menu from the idle screen and opens or selects the highlighted row elsewhere; hold it for an app's options. The screen shows just the Navi key's label.
+- **Razr silver / Razr pink**: metal flip with a slotted earpiece, black glass around a colour screen (blue or pink title bar), and a wide hinge. The flat keys are etched into a metal plate. Under the screen: two soft keys with a menu key between them, a web key (all apps) over the green send key, the round pad (top and bottom scroll, centre selects), and a message key (recent apps) over the red end key. A speaker grille sits in the chin.
+- **Samsung flip**: silver clamshell with an oval earpiece, a framed colour screen with a blue title bar, and a barrel hinge with round bumpers. Under the screen: soft keys marked with three dots, a square pad with a blue *i* centre key, then send, C, and end keys. The pill keys have blue printing and sit in curved rows.
+- **Motorola brick**: cream body with a dark face, antenna, speaker cup, BATT/ROAM lights, a red LED readout, and square keys. The function keys work as printed: Rcl (recent apps), Clr, Snd (red; opens), Fcn (menu/options), End, Vol (volume), and Lock (quick settings). Sto ▲ and Pwr ▼ scroll, since the original had no arrow keys.
 
 ## Settings (Menu)
 

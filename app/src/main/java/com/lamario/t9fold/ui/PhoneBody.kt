@@ -505,13 +505,13 @@ private fun NavPad(state: LauncherState, shape: Shape, modifier: Modifier) {
     }
 }
 
-private class BrickKey(val label: String, val key: PhoneKey, val hint: String = "", val red: Boolean = false)
+private class BrickKey(val label: String, val key: PhoneKey, val red: Boolean = false)
 
-/** The brick's function keys, as printed on the original; the scroll keys carry small arrows. */
+/** The brick's function keys, with the scroll keys in the middle column. */
 private val BRICK_FUNCTION_ROWS = listOf(
-    listOf(BrickKey("Rcl", PhoneKey.RECENTS), BrickKey("Clr", PhoneKey.SOFT_RIGHT), BrickKey("Snd", PhoneKey.CALL, red = true)),
-    listOf(BrickKey("Sto", PhoneKey.UP, "▲"), BrickKey("Fcn", PhoneKey.SOFT_LEFT), BrickKey("End", PhoneKey.END)),
-    listOf(BrickKey("Pwr", PhoneKey.DOWN, "▼"), BrickKey("Lock", PhoneKey.QUICK_SETTINGS), BrickKey("Vol", PhoneKey.VOLUME)),
+    listOf(BrickKey("Clr", PhoneKey.SOFT_RIGHT), BrickKey("Menu", PhoneKey.MENU), BrickKey("Snd", PhoneKey.CALL, red = true)),
+    listOf(BrickKey("Vol", PhoneKey.VOLUME), BrickKey("▲", PhoneKey.UP), BrickKey("Fcn", PhoneKey.SOFT_LEFT)),
+    listOf(BrickKey("Rcl", PhoneKey.RECENTS), BrickKey("▼", PhoneKey.DOWN), BrickKey("Notif", PhoneKey.NOTIFICATIONS)),
 )
 
 @Composable
@@ -530,13 +530,13 @@ private fun BrickFunctionKeys(state: LauncherState, mirrored: Boolean, modifier:
                         modifier = Modifier.weight(1f).fillMaxHeight(),
                         onLongClick = if (k.key == PhoneKey.SOFT_RIGHT) ({ state.onLongKey(k.key) }) else null,
                     ) {
-                        Row(verticalAlignment = Alignment.CenterVertically) {
-                            KeyText(k.label, 15.dp, if (k.red) skin.CallGlyph else skin.KeyText, bold = false)
-                            if (k.hint.isNotEmpty()) {
-                                Spacer(Modifier.width(3.dp))
-                                KeyText(k.hint, 9.dp, skin.KeySubText, bold = false)
-                            }
-                        }
+                        val arrow = k.key == PhoneKey.UP || k.key == PhoneKey.DOWN
+                        KeyText(
+                            k.label,
+                            if (arrow) 20.dp else 15.dp,
+                            if (k.red) skin.CallGlyph else skin.KeyText,
+                            bold = arrow,
+                        )
                     }
                 }
             }

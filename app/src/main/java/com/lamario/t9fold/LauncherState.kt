@@ -33,7 +33,7 @@ enum class PhoneKey(val char: Char? = null) {
     NAVI,
 
     // Dedicated keys some phone styles have.
-    MENU, APPS, RECENTS, QUICK_SETTINGS, VOLUME;
+    MENU, APPS, RECENTS, QUICK_SETTINGS, VOLUME, NOTIFICATIONS;
 
     companion object {
         fun of(c: Char): PhoneKey = entries.first { it.char == c }
@@ -300,6 +300,7 @@ class LauncherState(
             PhoneKey.RECENTS -> open(Screen.Recents)
             PhoneKey.QUICK_SETTINGS -> quick.run(QuickAction.QUICK_SETTINGS)
             PhoneKey.VOLUME -> quick.run(QuickAction.VOLUME)
+            PhoneKey.NOTIFICATIONS -> actions.expandNotifications()
             PhoneKey.SOFT_RIGHT -> if (screen == Screen.Search) {
                 input = input.backspace()
                 selection = 0

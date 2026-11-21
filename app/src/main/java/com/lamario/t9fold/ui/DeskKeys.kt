@@ -61,7 +61,7 @@ fun DeskKeysPanel(state: LauncherState, modifier: Modifier = Modifier) {
             .fillMaxSize()
             .background(Retro.Body)
             .swipeDownToExpand(state::expandNotifications)
-            .padding(start = 16.dp, end = 16.dp, top = 10.dp, bottom = 22.dp),
+            .padding(start = 16.dp, end = 16.dp, top = 10.dp, bottom = 10.dp),
     ) {
         Row(Modifier.fillMaxWidth().padding(horizontal = 4.dp), verticalAlignment = Alignment.CenterVertically) {
             PixelText("SPEED KEYS", Modifier.weight(1f), size = 18.dp, color = Retro.Chrome)

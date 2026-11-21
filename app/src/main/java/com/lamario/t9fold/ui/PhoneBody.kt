@@ -7,6 +7,7 @@ import androidx.compose.foundation.gestures.detectTapGestures
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.BoxScope
+import androidx.compose.foundation.layout.BoxWithConstraints
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
@@ -57,15 +58,17 @@ import kotlin.math.max
 /**
  * The phone: earpiece, screen, navigation keys, keypad, drawn after the selected phone style.
  * [mirrored] flips the left/right placement of every key, as if the faceplate were lying face down.
+ * [topInset] pushes the phone down so the earpiece sits just below the camera cut-out; only the
+ * keys give up that room, the screen keeps its height.
  */
 @Composable
-fun PhoneBody(state: LauncherState, mirrored: Boolean, modifier: Modifier = Modifier) {
+fun PhoneBody(state: LauncherState, mirrored: Boolean, modifier: Modifier = Modifier, topInset: Dp = 0.dp) {
     val skin = Retro
     Column(
         modifier
             .fillMaxSize()
             .background(skin.Body)
-            .padding(start = 12.dp, end = 12.dp, top = 6.dp, bottom = 22.dp),
+            .padding(start = 12.dp, end = 12.dp, top = 6.dp + topInset, bottom = BOTTOM_PADDING),
     ) {
         val face = skin.FacePlate
         Column(
@@ -86,57 +89,83 @@ fun PhoneBody(state: LauncherState, mirrored: Boolean, modifier: Modifier = Modi
         ) {
             TopDetails(skin.layout)
             Spacer(Modifier.height(6.dp))
-            LcdPanel(Modifier.fillMaxWidth().weight(skin.lcdWeight)) {
-                LcdContent(state, mirrored)
-            }
-            when (skin.layout) {
-                BodyLayout.RAZR -> RazrHinge()
-                BodyLayout.SAMSUNG_FLIP -> SamsungHinge()
-                else -> Spacer(Modifier.height(12.dp))
-            }
-            val plate = skin.Plate
-            Column(
-                Modifier
-                    .fillMaxWidth()
-                    .weight(1f - skin.lcdWeight)
-                    .then(
-                        if (plate != null) {
-                            Modifier
-                                .clip(RoundedCornerShape(16.dp))
-                                .background(Brush.verticalGradient(listOf(lerp(plate, Color.White, 0.25f), plate)))
-                                .padding(8.dp)
-                        } else {
-                            Modifier
-                        },
-                    )
-                    .swipeDownToExpand(state::expandNotifications),
-            ) {
-                when (skin.layout) {
-                    BodyLayout.NOKIA_3310 -> {
-                        NokiaNav(state, mirrored, Modifier.fillMaxWidth().weight(0.27f))
-                        Spacer(Modifier.height(10.dp))
-                        Keypad(state, mirrored, Modifier.fillMaxWidth().weight(0.73f))
+            BoxWithConstraints(Modifier.fillMaxWidth().weight(1f)) {
+                val middle = middleHeight(skin.layout)
+                // The screen's share of the room it had before the camera gap was added (and when the
+                // bottom still held page dots), so only the keys below it get shorter.
+                val lcdHeight = ((maxHeight - middle + topInset - (OLD_BOTTOM_PADDING - BOTTOM_PADDING)) * skin.lcdWeight)
+                    .coerceIn(0.dp, (maxHeight - middle - MIN_CONTROLS_HEIGHT).coerceAtLeast(0.dp))
+                Column(Modifier.fillMaxSize()) {
+                    LcdPanel(Modifier.fillMaxWidth().height(lcdHeight)) {
+                        LcdContent(state, mirrored)
                     }
-                    BodyLayout.RAZR -> {
-                        RazrNav(state, mirrored, Modifier.fillMaxWidth().weight(0.34f))
-                        Spacer(Modifier.height(6.dp))
-                        Keypad(state, mirrored, Modifier.fillMaxWidth().weight(0.66f))
+                    when (skin.layout) {
+                        BodyLayout.RAZR -> RazrHinge()
+                        BodyLayout.SAMSUNG_FLIP -> SamsungHinge()
+                        else -> Spacer(Modifier.height(middle))
                     }
-                    BodyLayout.SAMSUNG_FLIP -> {
-                        SamsungNav(state, mirrored, Modifier.fillMaxWidth().weight(0.34f))
-                        Spacer(Modifier.height(10.dp))
-                        Keypad(state, mirrored, Modifier.fillMaxWidth().weight(0.66f))
-                    }
-                    BodyLayout.BRICK -> {
-                        Keypad(state, mirrored, Modifier.fillMaxWidth().weight(0.56f))
-                        Spacer(Modifier.height(12.dp))
-                        BrickFunctionKeys(state, mirrored, Modifier.fillMaxWidth().weight(0.44f))
+                    val plate = skin.Plate
+                    Column(
+                        Modifier
+                            .fillMaxWidth()
+                            .weight(1f)
+                            .then(
+                                if (plate != null) {
+                                    Modifier
+                                        .clip(RoundedCornerShape(16.dp))
+                                        .background(Brush.verticalGradient(listOf(lerp(plate, Color.White, 0.25f), plate)))
+                                        .padding(8.dp)
+                                } else {
+                                    Modifier
+                                },
+                            )
+                            .swipeDownToExpand(state::expandNotifications),
+                    ) {
+                        when (skin.layout) {
+                            BodyLayout.NOKIA_3310 -> {
+                                NokiaNav(state, mirrored, Modifier.fillMaxWidth().weight(0.27f))
+                                Spacer(Modifier.height(10.dp))
+                                Keypad(state, mirrored, Modifier.fillMaxWidth().weight(0.73f))
+                            }
+                            BodyLayout.RAZR -> {
+                                RazrNav(state, mirrored, Modifier.fillMaxWidth().weight(0.34f))
+                                Spacer(Modifier.height(6.dp))
+                                Keypad(state, mirrored, Modifier.fillMaxWidth().weight(0.66f))
+                            }
+                            BodyLayout.SAMSUNG_FLIP -> {
+                                SamsungNav(state, mirrored, Modifier.fillMaxWidth().weight(0.34f))
+                                Spacer(Modifier.height(10.dp))
+                                Keypad(state, mirrored, Modifier.fillMaxWidth().weight(0.66f))
+                            }
+                            BodyLayout.BRICK -> {
+                                Keypad(state, mirrored, Modifier.fillMaxWidth().weight(0.56f))
+                                Spacer(Modifier.height(12.dp))
+                                BrickFunctionKeys(state, mirrored, Modifier.fillMaxWidth().weight(0.44f))
+                            }
+                        }
                     }
                 }
             }
             BottomDetails(skin.layout)
         }
     }
+}
+
+private val BOTTOM_PADDING = 10.dp
+
+/** The bottom padding when page dots sat below the phone; the screen height is still based on it. */
+private val OLD_BOTTOM_PADDING = 22.dp
+private val MIN_CONTROLS_HEIGHT = 160.dp
+private val RAZR_HINGE_HEIGHT = 24.dp
+private val RAZR_HINGE_GAP = 6.dp
+private val SAMSUNG_HINGE_HEIGHT = 26.dp
+private val SAMSUNG_HINGE_GAP = 4.dp
+
+/** The fixed space between the screen and the keys: a hinge on the flip phones, a gap otherwise. */
+private fun middleHeight(layout: BodyLayout): Dp = when (layout) {
+    BodyLayout.RAZR -> RAZR_HINGE_HEIGHT + RAZR_HINGE_GAP * 2
+    BodyLayout.SAMSUNG_FLIP -> SAMSUNG_HINGE_HEIGHT + SAMSUNG_HINGE_GAP * 2
+    else -> 12.dp
 }
 
 // ---- Body details ------------------------------------------------------------------------------
@@ -271,8 +300,8 @@ private fun RazrHinge() {
     Box(
         Modifier
             .fillMaxWidth()
-            .padding(vertical = 6.dp)
-            .height(24.dp)
+            .padding(vertical = RAZR_HINGE_GAP)
+            .height(RAZR_HINGE_HEIGHT)
             .shadow(3.dp, RoundedCornerShape(8.dp))
             .clip(RoundedCornerShape(8.dp))
             .background(Brush.verticalGradient(listOf(skin.Chrome, skin.BodyDark, skin.Chrome))),
@@ -286,7 +315,7 @@ private fun RazrHinge() {
 @Composable
 private fun SamsungHinge() {
     val skin = Retro
-    Box(Modifier.fillMaxWidth().padding(vertical = 4.dp).height(26.dp)) {
+    Box(Modifier.fillMaxWidth().padding(vertical = SAMSUNG_HINGE_GAP).height(SAMSUNG_HINGE_HEIGHT)) {
         Box(
             Modifier
                 .align(Alignment.Center)

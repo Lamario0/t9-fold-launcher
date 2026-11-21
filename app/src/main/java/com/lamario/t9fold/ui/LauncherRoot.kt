@@ -10,6 +10,10 @@ import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.BoxScope
 import androidx.compose.foundation.layout.BoxWithConstraints
 import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.WindowInsets
+import androidx.compose.foundation.layout.displayCutout
+import androidx.compose.foundation.layout.exclude
+import androidx.compose.foundation.layout.statusBars
 import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
@@ -31,6 +35,8 @@ import androidx.compose.ui.graphics.TransformOrigin
 import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.input.pointer.PointerEventPass
 import androidx.compose.ui.input.pointer.pointerInput
+import androidx.compose.ui.platform.LocalDensity
+import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import com.lamario.t9fold.LauncherState
 import com.lamario.t9fold.system.LocalPhoneStatus
@@ -96,13 +102,23 @@ private fun CoverLayout(state: LauncherState, store: WidgetStore, widgets: Widge
             modifier = Modifier.fillMaxSize().pagerSwipe(pager),
         ) { page ->
             if (page == 0) {
-                PhoneBody(state, mirrored = false)
+                PhoneBody(state, mirrored = false, topInset = cameraGap())
             } else {
                 WidgetPage(page - 1, state, store, widgets)
             }
         }
-        PageDots(pager, Modifier.align(Alignment.BottomCenter).padding(bottom = 8.dp))
     }
+}
+
+/**
+ * The part of the camera cut-out that the status bar doesn't already cover: all of it while the
+ * retro status bar hides Android's, nothing while Android's is showing.
+ */
+@Composable
+private fun cameraGap(): Dp {
+    val density = LocalDensity.current
+    val gap = WindowInsets.displayCutout.exclude(WindowInsets.statusBars).getTop(density)
+    return with(density) { gap.toDp() }
 }
 
 /**
@@ -131,7 +147,6 @@ private fun InsideLayout(state: LauncherState, store: WidgetStore, widgets: Widg
                     WidgetPage(page - 1, state, store, widgets)
                 }
             }
-            PageDots(pager, Modifier.align(Alignment.BottomCenter).padding(bottom = 8.dp))
         }
     }
 }

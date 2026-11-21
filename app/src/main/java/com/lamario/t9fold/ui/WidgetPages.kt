@@ -17,7 +17,6 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
-import androidx.compose.foundation.pager.PagerState
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
@@ -51,7 +50,7 @@ fun WidgetPage(
     val items = store.pages[page]
     val scroll = rememberScrollState()
 
-    Column(modifier.fillMaxSize().background(Retro.Body).padding(bottom = 22.dp)) {
+    Column(modifier.fillMaxSize().background(Retro.Body).padding(bottom = 10.dp)) {
         if (state.prefs.retroStatusBar) {
             LcdPanel(Modifier.fillMaxWidth().height(44.dp).padding(start = 14.dp, end = 14.dp, top = 6.dp), bezel = 4.dp) {
                 RetroStatusRow(Modifier.fillMaxSize())
@@ -149,19 +148,5 @@ fun Chip(text: String, modifier: Modifier = Modifier, onClick: () -> Unit) {
         contentAlignment = Alignment.Center,
     ) {
         PixelText(text, size = 20.dp, color = Retro.Chrome, align = TextAlign.Center)
-    }
-}
-
-/** Small square dots under the pager, LCD style. */
-@Composable
-fun PageDots(pager: PagerState, modifier: Modifier = Modifier) {
-    Row(modifier, horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-        repeat(pager.pageCount) { i ->
-            Box(
-                Modifier
-                    .size(8.dp)
-                    .background(if (i == pager.currentPage) Retro.Chrome else Retro.ChromeDark.copy(alpha = 0.4f)),
-            )
-        }
     }
 }
